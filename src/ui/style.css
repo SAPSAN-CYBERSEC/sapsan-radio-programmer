@@ -178,50 +178,6 @@ button.big.danger:disabled {
   font-size: 0.95rem;
 }
 
-/* Znacznik "tylko sluchanie" musi byc czytelny na pierwszy rzut oka, */
-/* bo to jedyna informacja o tym, ze na tym kanale nie wolno nadawac. */
-.tag {
-  display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.tag.rx {
-  background: #fdf0dc;
-  color: var(--ostrzezenie);
-}
-
-.tag.tx {
-  background: #e2f2e9;
-  color: var(--ok);
-}
-
-.legal {
-  margin: 0.5rem 0 0;
-  font-size: 0.9rem;
-  color: #4a545f;
-}
-
-.license {
-  display: flex;
-  gap: 0.8rem;
-  align-items: flex-start;
-  padding: 1rem;
-  border: 2px solid var(--obwodka);
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.license input {
-  width: 1.5rem;
-  height: 1.5rem;
-  flex-shrink: 0;
-}
-
 .counter {
   font-weight: 600;
   margin: 1rem 0;
@@ -275,4 +231,63 @@ button.big.danger:disabled {
   margin: 2rem auto 0;
   color: #4a545f;
   font-size: 0.9rem;
+}
+
+/* Naglowek z wyborem jezyka i kraju */
+.head-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.pickers {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pickers label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  color: #4a545f;
+}
+
+.pickers select {
+  min-height: 44px;
+  padding: 0.4rem 0.6rem;
+  font-size: 1rem;
+  color: var(--tekst);
+  background: var(--karta);
+  border: 1px solid var(--obwodka);
+  border-radius: 8px;
+}
+
+/*
+ * Jedna informacja o przepisach, raz, na gorze. Nie powtarzamy jej przy kazdym
+ * zestawie - klient wie, co robi, a napis przy kazdej pozycji byloby moralizowaniem.
+ */
+.legal-banner {
+  margin: 1rem 0 0;
+  padding: 0.85rem 1.1rem;
+  background: #fff8ec;
+  border: 1px solid #e6cfa6;
+  border-radius: 10px;
+  color: #5c4413;
+  font-size: 0.95rem;
+}
+
+/* Liczba kanalow w zestawie - drobna informacja, nie ozdoba */
+.count {
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: #eceff3;
+  color: #4a545f;
+  font-size: 0.85rem;
+  font-weight: 600;
 }

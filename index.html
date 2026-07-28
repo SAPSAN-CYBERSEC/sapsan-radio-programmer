@@ -1,85 +1,79 @@
 <!doctype html>
-<html lang="pl">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Programator krótkofalówek Baofeng</title>
+    <title>Radio programmer</title>
     <meta
       name="description"
-      content="Ustaw kanały w krótkofalówce Baofeng prosto z przeglądarki. Bez instalowania programów."
+      content="Set up channels in your Baofeng handheld straight from the browser. Nothing to install."
     />
     <link rel="stylesheet" href="/src/ui/style.css" />
   </head>
   <body>
     <header class="topbar">
-      <h1>Programator krótkofalówek</h1>
-      <p class="subtitle">Ustaw kanały w radiu Baofeng bez instalowania żadnego programu.</p>
+      <div class="head-row">
+        <div>
+          <h1 id="t-title"></h1>
+          <p class="subtitle" id="t-subtitle"></p>
+        </div>
+        <div class="pickers">
+          <label>
+            <span id="t-language"></span>
+            <select id="lang"></select>
+          </label>
+          <label>
+            <span id="t-country"></span>
+            <select id="country"></select>
+          </label>
+        </div>
+      </div>
+      <p class="legal-banner" id="t-legal"></p>
     </header>
 
     <main id="app">
-      <!-- Ekran 1 -->
       <section class="step" id="step-connect">
-        <h2><span class="num">1</span> Podłącz radio</h2>
+        <h2><span class="num">1</span> <span id="t-step1"></span></h2>
         <ol class="checklist">
-          <li>Włóż wtyk kabla do gniazda w radiu, aż wskoczy.</li>
-          <li>Włącz radio i ustaw głośność mniej więcej na połowę.</li>
-          <li>Podłącz drugi koniec kabla do komputera.</li>
+          <li id="t-hint1"></li>
+          <li id="t-hint2"></li>
+          <li id="t-hint3"></li>
         </ol>
-        <button class="big" id="btn-connect">Połącz z radiem</button>
-        <p class="note" id="browser-warning" hidden>
-          Ta przeglądarka nie potrafi rozmawiać z radiem. Otwórz stronę w przeglądarce
-          <strong>Chrome</strong>, <strong>Edge</strong>, <strong>Opera</strong> albo <strong>Brave</strong>.
-        </p>
+        <button class="big" id="btn-connect"></button>
+        <p class="note" id="browser-warning" hidden></p>
       </section>
 
-      <!-- Ekran 2 -->
       <section class="step" id="step-choose" hidden>
-        <h2><span class="num">2</span> Wybierz, co ma być w radiu</h2>
-        <p class="lead">Zaznacz, czego chcesz słuchać. Możesz wybrać kilka pozycji naraz.</p>
+        <h2><span class="num">2</span> <span id="t-step2"></span></h2>
+        <p class="lead" id="t-choose-lead"></p>
         <div id="sets" class="sets"></div>
-
-        <label class="license">
-          <input type="checkbox" id="has-license" />
-          <span>Mam pozwolenie radiowe i znak wywoławczy krótkofalowca</span>
-        </label>
-        <p class="note">
-          Bez zaznaczenia tego pola radio będzie na wszystkich kanałach tylko słuchać. Nadawanie bez
-          pozwolenia jest karalne.
-        </p>
-
         <p class="counter" id="counter"></p>
-        <button class="big" id="btn-next">Dalej</button>
+        <button class="big" id="btn-next"></button>
       </section>
 
-      <!-- Ekran 3 -->
       <section class="step" id="step-write" hidden>
-        <h2><span class="num">3</span> Zapisz do radia</h2>
-        <p class="lead">
-          Najpierw zrobimy kopię tego, co masz teraz w radiu. Gdyby coś poszło nie tak, wrócisz do
-          poprzednich ustawień.
-        </p>
-        <button class="big" id="btn-backup">Zrób kopię zapasową</button>
+        <h2><span class="num">3</span> <span id="t-step3"></span></h2>
+        <p class="lead" id="t-backup-lead"></p>
+        <button class="big" id="btn-backup"></button>
         <p class="ok" id="backup-status" hidden></p>
 
-        <button class="big danger" id="btn-write" disabled>Zapisz kanały do radia</button>
-        <p class="warn">Podczas zapisu nie odłączaj kabla i nie wyłączaj radia.</p>
+        <button class="big danger" id="btn-write" disabled></button>
+        <p class="warn" id="t-dont-unplug"></p>
 
         <div class="progress" id="progress" hidden><div class="bar" id="bar"></div></div>
       </section>
 
       <section class="step done" id="step-done" hidden>
-        <h2>Gotowe</h2>
+        <h2 id="t-done-title"></h2>
         <p class="lead" id="done-text"></p>
-        <button class="big" id="btn-restart">Ustaw jeszcze raz</button>
+        <button class="big" id="btn-restart"></button>
       </section>
 
       <p class="error" id="error" hidden></p>
     </main>
 
     <footer class="footer">
-      <p>
-        Wszystko dzieje się w Twojej przeglądarce. Ustawienia radia nie są nigdzie wysyłane.
-      </p>
+      <p id="t-footer">Everything runs in your browser. Nothing is sent anywhere.</p>
     </footer>
 
     <script type="module" src="/src/ui/main.ts"></script>

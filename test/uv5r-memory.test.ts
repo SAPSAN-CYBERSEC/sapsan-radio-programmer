@@ -20,7 +20,15 @@ import {
   NAMES_ADDR,
   type Channel,
 } from '../src/radio/uv5r-memory.ts';
-import { PMR446, LPD433, HAM_2M } from '../src/data/bands.ts';
+import {
+  PMR446,
+  LPD433,
+  FREENET,
+  FRS_GMRS,
+  MURS,
+  setsForCountry,
+  countChannels,
+} from '../src/data/bands.ts';
 import { buildChannels } from '../src/data/build-channels.ts';
 
 const base: Channel = {
@@ -39,8 +47,8 @@ test('czestotliwosc zapisuje sie jako BCD little-endian w jednostkach 10 Hz', ()
 });
 
 test('kanal wylacznie odbiorczy ma nadajnik zablokowany wypelniaczem', () => {
-  // To jedyny mechanizm, ktorym radio sprzetowo blokuje nadawanie.
-  // Gdyby tu wpadla czestotliwosc zamiast 0xFF, uzytkownik nadalby na PMR446 mocą 1 W.
+  // Kreator takich kanalow nie tworzy, ale format je zna i uzytkownik moze miec je
+  // w radiu z CHIRP-a. Bez tego odczyt zinterpretowalby 0xFFFFFFFF jako czestotliwosc.
   const buf = encodeChannel({ ...base, txFreq: null });
   assert.deepEqual([...buf.slice(4, 8)], [0xff, 0xff, 0xff, 0xff]);
 });
@@ -96,38 +104,6 @@ test('zapis do obrazu trafia pod adresy kanalow i nazw', () => {
   assert.equal(image[CHANNELS_ADDR + 16], 0xff);
 });
 
-test('PMR446 i LPD433 NIGDY nie dostaja prawa nadawania, nawet z pozwoleniem', () => {
-  // Limit mocy PMR446 to 0,5 W, LPD433 to 10 mW. Baofeng nie zejdzie tak nisko,
-  // wiec zadne oswiadczenie uzytkownika nie moze tego odblokowac.
-  const result = buildChannels([PMR446, LPD433], { hasLicense: true });
-  assert.equal(result.channels.length, 85);
-  assert.ok(result.channels.every((c) => c.txFreq === null));
-  assert.equal(result.receiveOnly, 85);
-});
-
-test('pasmo amatorskie nadaje dopiero po oswiadczeniu o pozwoleniu', () => {
-  const without = buildChannels([HAM_2M], { hasLicense: false });
-  assert.ok(without.channels.every((c) => c.txFreq === null));
-
-  const with_ = buildChannels([HAM_2M], { hasLicense: true });
-  assert.ok(with_.channels.every((c) => c.txFreq === c.rxFreq));
-});
-
-test('nadmiar kanalow jest obcinany do pojemnosci radia i zglaszany', () => {
-  // 16 + 69 + 32 + 15 = 132 kanaly, a radio miesci 128. Uzytkownik musi o tym wiedziec,
-  // inaczej bedzie szukal kanalu, ktorego nie ma.
-  const sets = [PMR446, LPD433, HAM_2M];
-  const result = buildChannels(sets, { hasLicense: false });
-  assert.equal(result.channels.length, 117);
-  assert.equal(result.dropped, 0);
-
-  const overflow = buildChannels([...sets, { ...PMR446, id: 'x', channels: PMR446.channels }], {
-    hasLicense: false,
-  });
-  assert.equal(overflow.channels.length, 128);
-  assert.equal(overflow.dropped, 5);
-});
-
 test('krance tabel czestotliwosci zgadzaja sie ze zrodlem', () => {
   // czestotliwosci.pl.tl: PMR446 kanal 1 = 446,00625, kanal 16 = 446,19375;
   // LPD433 kanal 1 = 433,075, kanal 69 = 434,775.
@@ -135,4 +111,70 @@ test('krance tabel czestotliwosci zgadzaja sie ze zrodlem', () => {
   assert.equal(PMR446.channels[15]!.rx, 446_193_750);
   assert.equal(LPD433.channels[0]!.rx, 433_075_000);
   assert.equal(LPD433.channels[68]!.rx, 434_775_000);
+});
+
+test('kanaly buduja sie jako simpleksowe - nadawanie rowne odbiorowi', () => {
+  // Nie blokujemy niczego. Uzytkownik decyduje, na czym nadaje, my tylko wpisujemy kanaly.
+  const result = buildChannels([PMR446, LPD433]);
+  assert.equal(result.channels.length, 85);
+  assert.ok(result.channels.every((c) => c.txFreq === c.rxFreq));
+  assert.equal(result.dropped, 0);
+});
+
+test('nadmiar kanalow jest obcinany do pojemnosci radia i zglaszany', () => {
+  // Uzytkownik musi wiedziec, ze czesc sie nie zmiescila, inaczej bedzie szukal kanalu,
+  // ktorego w radiu nie ma.
+  const overflow = buildChannels([PMR446, LPD433, FRS_GMRS, MURS]);
+  assert.equal(overflow.channels.length, 112);
+  assert.equal(overflow.dropped, 0);
+
+  const tooMuch = buildChannels([LPD433, LPD433]);
+  assert.equal(tooMuch.channels.length, 128);
+  assert.equal(tooMuch.dropped, 10);
+});
+
+test('zestawy sa filtrowane po kraju', () => {
+  // Amerykaninowi nie pokazujemy PMR446, a Polakowi FRS - inaczej lista jest smietnikiem.
+  const us = setsForCountry('US').map((s) => s.id);
+  assert.ok(us.includes('frs-gmrs') && us.includes('murs'));
+  assert.ok(!us.includes('pmr446') && !us.includes('lpd433'));
+
+  const de = setsForCountry('DE').map((s) => s.id);
+  assert.ok(de.includes('freenet'), 'Freenet jest niemiecki');
+  assert.ok(!de.includes('pmr154'), 'PMR-154 jest polski');
+  assert.ok(de.includes('pmr446'), 'PMR446 jest ogolnoeuropejski');
+
+  const cz = setsForCountry('CZ').map((s) => s.id);
+  assert.ok(!cz.includes('freenet') && !cz.includes('pmr154'));
+
+  const pl = setsForCountry('PL').map((s) => s.id);
+  assert.ok(pl.includes('pmr154') && !pl.includes('freenet'));
+});
+
+test('krance tabel nowych krajow zgadzaja sie ze zrodlem', () => {
+  // FRS/GMRS wg FCC: 1-7 od 462,5625; 8-14 od 467,5625; 15-22 od 462,5500.
+  assert.equal(FRS_GMRS.channels.length, 22);
+  assert.equal(FRS_GMRS.channels[0]!.rx, 462_562_500);
+  assert.equal(FRS_GMRS.channels[6]!.rx, 462_712_500);
+  assert.equal(FRS_GMRS.channels[7]!.rx, 467_562_500);
+  assert.equal(FRS_GMRS.channels[13]!.rx, 467_712_500);
+  assert.equal(FRS_GMRS.channels[14]!.rx, 462_550_000);
+  assert.equal(FRS_GMRS.channels[21]!.rx, 462_725_000);
+
+  // MURS wg FCC, piec kanalow.
+  assert.deepEqual(
+    MURS.channels.map((c) => c.rx),
+    [151_820_000, 151_880_000, 151_940_000, 154_570_000, 154_600_000],
+  );
+
+  // Freenet wg BNetzA, szesc kanalow.
+  assert.deepEqual(
+    FREENET.channels.map((c) => c.rx),
+    [149_025_000, 149_037_500, 149_050_000, 149_087_500, 149_100_000, 149_112_500],
+  );
+});
+
+test('licznik kanalow sumuje wybrane zestawy', () => {
+  assert.equal(countChannels([FRS_GMRS, MURS]), 27);
+  assert.equal(countChannels([]), 0);
 });

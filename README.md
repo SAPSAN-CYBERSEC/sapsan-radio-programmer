@@ -37,26 +37,29 @@ Faza 1 to jedna rodzina protokołu, która pokrywa:
 Rozpoznanie modelu następuje po sekwencji powitalnej — jeśli radio nie odpowie żadną ze znanych,
 program się zatrzyma zamiast zgadywać.
 
-## Bezpieczeństwo i prawo
+## Kraje i języki
 
-Dwie rzeczy wbudowane w kod, nie w regulamin:
+Interfejs startuje **po angielsku**, do wyboru są też polski, niemiecki i czeski.
 
-**1. Kopia zapasowa jest obowiązkowa.** Przycisk zapisu jest nieaktywny, dopóki nie zostanie pobrany
+Zestawy częstotliwości filtrują się po wybranym kraju, żeby lista nie była śmietnikiem:
+
+| Kraj | Zestawy |
+|---|---|
+| 🇺🇸 USA | FRS/GMRS (22), MURS (5), 2 m i 70 cm wg ARRL |
+| 🇵🇱 Polska | PMR446, LPD433, PMR-154, 2 m i 70 cm wg IARU R1 |
+| 🇩🇪 Niemcy | PMR446, LPD433, Freenet (6), 2 m i 70 cm wg IARU R1 |
+| 🇨🇿 Czechy | PMR446, LPD433, 2 m i 70 cm wg IARU R1 |
+
+## Bezpieczeństwo
+
+**Kopia zapasowa jest obowiązkowa.** Przycisk zapisu jest nieaktywny, dopóki nie zostanie pobrany
 plik z aktualną zawartością pamięci radia.
 
-**2. Kanały bez prawa nadawania trafiają do radia z zablokowanym nadajnikiem.** Zapisujemy wtedy
-`0xFFFFFFFF` w polu częstotliwości nadawania, co radio egzekwuje sprzętowo.
+**Zapisujemy tylko obszar kanałów i nazw**, nie całą pamięć. Ustawienia radia zostają nietknięte,
+a obszar pomocniczy od 0x1EC0 (limity pasm, komunikat powitalny) nie jest nawet czytany.
 
-Dotyczy to w szczególności:
-
-| Zakres | Limit mocy | Baofeng | Wniosek |
-|---|---|---|---|
-| PMR446 | 0,5 W, antena nieodłączalna | min. 1 W, antena na SMA | tylko odbiór |
-| LPD433 | 10 mW | min. 1 W | tylko odbiór |
-| Pasma amatorskie | — | — | nadawanie po potwierdzeniu pozwolenia |
-| PMR-154 | 1 W | — | wymaga zezwolenia UKE |
-
-Zestawów oznaczonych jako `receive-only` nie da się odblokować żadną opcją w interfejsie. To celowe.
+Program nie ogranicza tego, co można wpisać do radia. Jedna informacja o zgodności z lokalnymi
+przepisami stoi na stronie głównej — reszta to decyzja użytkownika.
 
 ## Uruchomienie
 
@@ -73,8 +76,9 @@ npm run build    # wersja produkcyjna
 src/radio/uv5r-memory.ts    mapa pamięci, kodowanie kanałów i nazw
 src/radio/uv5r-protocol.ts  protokół szeregowy: powitanie, odczyt, zapis
 src/radio/web-serial.ts     transport Web Serial
-src/data/bands.ts           zestawy częstotliwości z notatkami prawnymi
-src/data/build-channels.ts  jedyne miejsce, gdzie zapada decyzja o prawie do nadawania
+src/data/bands.ts           zestawy częstotliwości pogrupowane po krajach
+src/data/build-channels.ts  składanie wybranych zestawów w listę kanałów
+src/i18n/                   tłumaczenia EN / PL / DE / CS
 src/ui/                     kreator, trzy ekrany
 ```
 
@@ -85,6 +89,11 @@ Edytora tabeli kanałów (od tego jest CHIRP), wgrywania firmware'u, obsługi DM
 Brakuje też **zestawów służb i przemienników amatorskich per miasto**. To dane, których nie wolno
 zgadywać: kanał obok właściwego oznacza radio milczące, a użytkownik uzna, że narzędzie nie działa.
 Wejdą dopiero ze zweryfikowanego źródła.
+
+## Źródła danych
+
+PMR446, LPD433, PMR-154 — `czestotliwosci.pl.tl`. Freenet — BNetzA. FRS/GMRS i MURS — FCC via
+RadioReference. Pasma amatorskie — bandplan IARU Region 1 (Europa) i ARRL (USA).
 
 ## Podziękowania i licencja
 
