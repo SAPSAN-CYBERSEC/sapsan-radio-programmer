@@ -1,0 +1,270 @@
+/*
+ * Styl celowo duzy i kontrastowy. Znaczna czesc kupujacych krotkofalowki to osoby starsze,
+ * wiec bazowa czcionka ma 19 px, przyciski minimum 56 px wysokosci, a stany aktywne
+ * sa widoczne bez wpatrywania sie w ekran.
+ */
+
+:root {
+  --tekst: #14181d;
+  --tlo: #f6f7f9;
+  --karta: #ffffff;
+  --obwodka: #c8cdd4;
+  --akcent: #0b5cad;
+  --akcent-ciemny: #084584;
+  --ostrzezenie: #8a4b00;
+  --blad: #a11b1b;
+  --ok: #14663a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0 1rem 3rem;
+  background: var(--tlo);
+  color: var(--tekst);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 19px;
+  line-height: 1.55;
+}
+
+.topbar {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 2rem 0 1rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.9rem;
+}
+
+.subtitle {
+  margin: 0.4rem 0 0;
+  color: #4a545f;
+}
+
+main {
+  max-width: 46rem;
+  margin: 0 auto;
+}
+
+.step {
+  background: var(--karta);
+  border: 1px solid var(--obwodka);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0 0 1rem;
+  font-size: 1.4rem;
+}
+
+.num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  background: var(--akcent);
+  color: #fff;
+  font-size: 1.15rem;
+}
+
+.lead {
+  margin: 0 0 1rem;
+}
+
+.checklist {
+  margin: 0 0 1.25rem;
+  padding-left: 1.4rem;
+}
+
+.checklist li {
+  margin-bottom: 0.45rem;
+}
+
+/* Przyciski. Wysokosc i odstepy dobrane tak, zeby trafic w nie bez celowania. */
+button.big {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  padding: 0.9rem 1.2rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--akcent);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button.big:hover:not(:disabled) {
+  background: var(--akcent-ciemny);
+}
+
+button.big:disabled {
+  background: #9aa3ad;
+  cursor: not-allowed;
+}
+
+button.big:focus-visible {
+  outline: 3px solid #14181d;
+  outline-offset: 3px;
+}
+
+button.big.danger {
+  background: #a33a00;
+  margin-top: 1rem;
+}
+
+button.big.danger:hover:not(:disabled) {
+  background: #7d2c00;
+}
+
+/* Kafelki z zestawami czestotliwosci */
+.sets {
+  display: grid;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.set {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  padding: 1rem;
+  border: 2px solid var(--obwodka);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.set:has(input:checked) {
+  border-color: var(--akcent);
+  background: #eef5fc;
+}
+
+.set input {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.set-label {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.set-desc {
+  margin: 0.2rem 0 0;
+  color: #4a545f;
+  font-size: 0.95rem;
+}
+
+/* Znacznik "tylko sluchanie" musi byc czytelny na pierwszy rzut oka, */
+/* bo to jedyna informacja o tym, ze na tym kanale nie wolno nadawac. */
+.tag {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tag.rx {
+  background: #fdf0dc;
+  color: var(--ostrzezenie);
+}
+
+.tag.tx {
+  background: #e2f2e9;
+  color: var(--ok);
+}
+
+.legal {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: #4a545f;
+}
+
+.license {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+  padding: 1rem;
+  border: 2px solid var(--obwodka);
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.license input {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.counter {
+  font-weight: 600;
+  margin: 1rem 0;
+}
+
+.note {
+  color: #4a545f;
+  font-size: 0.95rem;
+}
+
+.warn {
+  color: var(--ostrzezenie);
+  font-weight: 600;
+}
+
+.ok {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.error {
+  padding: 1rem 1.25rem;
+  background: #fdeaea;
+  border: 2px solid var(--blad);
+  border-radius: 10px;
+  color: var(--blad);
+  font-weight: 600;
+}
+
+.progress {
+  height: 22px;
+  margin-top: 1rem;
+  background: #e3e6ea;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  width: 0;
+  background: var(--akcent);
+  transition: width 0.15s linear;
+}
+
+.done h2 {
+  color: var(--ok);
+}
+
+.footer {
+  max-width: 46rem;
+  margin: 2rem auto 0;
+  color: #4a545f;
+  font-size: 0.9rem;
+}
