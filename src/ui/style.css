@@ -357,3 +357,19 @@ button.big.danger:disabled {
 .freq-value {
   font-variant-numeric: tabular-nums;
 }
+
+/* Sekcja przywracania - ratunek, nie krok kreatora, wiec wyglada inaczej */
+.restore {
+  border-style: dashed;
+}
+
+.restore input[type='file'] {
+  display: block;
+  width: 100%;
+  padding: 0.7rem;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  background: var(--tlo);
+  border: 1px solid var(--obwodka);
+  border-radius: 8px;
+}

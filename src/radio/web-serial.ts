@@ -24,7 +24,11 @@ export class WebSerialTransport implements Transport {
   /** Bajty odebrane, a jeszcze nieskonsumowane przez `read`. */
   private buffer = new Uint8Array(0);
 
-  private constructor(private readonly port: SerialPort) {}
+  private readonly port: SerialPort;
+
+  private constructor(port: SerialPort) {
+    this.port = port;
+  }
 
   /**
    * Prosi uzytkownika o wskazanie portu i otwiera polaczenie.

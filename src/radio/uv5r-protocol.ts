@@ -45,9 +45,13 @@ export interface Transport {
 }
 
 export class RadioError extends Error {
-  constructor(message: string, readonly hint?: string) {
+  /** Podpowiedz dla uzytkownika: co zrobic, zeby bylo dobrze. */
+  readonly hint: string | undefined;
+
+  constructor(message: string, hint?: string) {
     super(message);
     this.name = 'RadioError';
+    this.hint = hint;
   }
 }
 
@@ -198,4 +202,81 @@ export async function writeChannels(t: Transport, image: Uint8Array, onProgress?
       onProgress?.(done, total);
     }
   }
+}
+
+/** Wynik sprawdzenia, czy w radiu jest to, co wyslalismy. */
+export interface VerifyResult {
+  ok: boolean;
+  /** Adres pierwszej roznicy - przydatny w zglaszaniu bledow. */
+  mismatchAt?: number;
+}
+
+/**
+ * Czyta z radia zapisane obszary i porownuje z tym, co mialo tam trafic.
+ *
+ * Radio potwierdza kazdy blok bajtem ACK, ale potwierdzenie znaczy tylko "odebralem",
+ * nie "zapisalem poprawnie". Roznica moze wyjsc przy slabym kablu albo styku,
+ * a uzytkownik zauwazylby ja dopiero w terenie.
+ *
+ * Rzuca `RadioError`, gdy nie da sie odczytac - to co innego niz niezgodnosc
+ * i wywolujacy musi te dwa przypadki rozroznic.
+ */
+export async function verifyChannels(
+  t: Transport,
+  expected: Uint8Array,
+  onProgress?: ProgressFn,
+): Promise<VerifyResult> {
+  // Nie wiemy z gory, czy po zapisie radio zostaje w sesji programowania,
+  // czy z niej wychodzi - to zalezy od wersji oprogramowania. Zamiast zgadywac,
+  // probujemy czytac od razu, a gdy sie nie uda, witamy sie ponownie.
+  try {
+    return await readAndCompare(t, expected, onProgress);
+  } catch {
+    await t.flush();
+    await identify(t);
+    return await readAndCompare(t, expected, onProgress);
+  }
+}
+
+async function readAndCompare(
+  t: Transport,
+  expected: Uint8Array,
+  onProgress?: ProgressFn,
+): Promise<VerifyResult> {
+  const total = WRITE_RANGES.reduce((sum, [from, to]) => sum + (to - from), 0);
+  let done = 0;
+  let first = true;
+
+  for (const [from, to] of WRITE_RANGES) {
+    for (let addr = from; addr < to; addr += READ_BLOCK) {
+      const size = Math.min(READ_BLOCK, to - addr);
+      const block = await readBlock(t, addr, size, first);
+      first = false;
+      for (let i = 0; i < size; i++) {
+        if (block[i] !== expected[addr + i]) {
+          return { ok: false, mismatchAt: addr + i };
+        }
+      }
+      done += size;
+      onProgress?.(done, total);
+    }
+  }
+  return { ok: true };
+}
+
+/**
+ * Sprawdza, czy plik wyglada na kopie pamieci radia z rodziny UV-5R.
+ *
+ * Wgranie obrazu z innego modelu zamienia radio w cegle, a uzytkownik siegajacy
+ * po kopie zapasowa jest zwykle w sytuacji, w ktorej drugi blad go dobije.
+ */
+export function looksLikeUv5rImage(data: Uint8Array): boolean {
+  if (data.length !== MAIN_MEMORY_SIZE) return false;
+
+  // Pierwsza pozycja musi byc albo pusta (0xFF), albo poprawna liczba BCD -
+  // kazda polowka bajtu jest wtedy cyfra 0-9.
+  const isBcdByte = (b: number) => (b >> 4) <= 9 && (b & 0x0f) <= 9;
+  const head = data.subarray(0, 4);
+  const empty = head.every((b) => b === 0xff);
+  return empty || head.every(isBcdByte);
 }

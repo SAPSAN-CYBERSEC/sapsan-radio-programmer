@@ -74,6 +74,16 @@ odtworzyć, która częstotliwość należy do którego miasta. Zgadywanie tutaj
 **Kopia zapasowa jest obowiązkowa.** Przycisk zapisu jest nieaktywny, dopóki nie zostanie pobrany
 plik z aktualną zawartością pamięci radia.
 
+**Przywracanie działa w obie strony.** Sekcja „przywróć z kopii" jest widoczna od chwili
+połączenia, nie na końcu kreatora — kto po nią sięga, zwykle już ma problem. Plik jest sprawdzany
+przed wysłaniem: zły rozmiar albo zawartość niepasująca do formatu UV-5R zatrzymuje operację.
+
+**Zapis jest weryfikowany odczytem.** Radio potwierdza każdy blok bajtem ACK, ale to znaczy tylko
+„odebrałem", nie „zapisałem poprawnie". Po zapisie czytamy zapisane obszary i porównujemy bajt po
+bajcie. Nieudany odczyt jest komunikowany inaczej niż niezgodność — to dwie różne sytuacje.
+
+**Zamknięcie karty w trakcie zapisu jest blokowane** ostrzeżeniem przeglądarki.
+
 **Zapisujemy tylko obszar kanałów i nazw**, nie całą pamięć. Ustawienia radia zostają nietknięte,
 a obszar pomocniczy od 0x1EC0 (limity pasm, komunikat powitalny) nie jest nawet czytany.
 

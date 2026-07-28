@@ -8,7 +8,14 @@
 import { setsForCountry, countChannels, COUNTRIES, type Country, type FrequencySet } from '../data/bands.ts';
 import { buildChannels } from '../data/build-channels.ts';
 import { writeChannelsIntoImage, CHANNEL_COUNT } from '../radio/uv5r-memory.ts';
-import { identify, readMainMemory, writeChannels, RadioError } from '../radio/uv5r-protocol.ts';
+import {
+  identify,
+  readMainMemory,
+  writeChannels,
+  verifyChannels,
+  looksLikeUv5rImage,
+  RadioError,
+} from '../radio/uv5r-protocol.ts';
 import { WebSerialTransport, isWebSerialSupported } from '../radio/web-serial.ts';
 import { localServiceSets, nationalServiceSets, placeNames } from '../data/services.ts';
 import { t, DEFAULT_LANG, LANGS, formatFreq, type Lang } from '../i18n/index.ts';
@@ -27,6 +34,8 @@ let transport: WebSerialTransport | null = null;
 /** Obraz pamieci odczytany z radia. Modyfikujemy kopie, oryginal zostaje na kopie zapasowa. */
 let radioImage: Uint8Array | null = null;
 let backupDone = false;
+/** Trwa zapis do radia - przerwanie go zostawia radio z polowa kanalow. */
+let writing = false;
 const selected = new Set<string>();
 
 const tr = () => t(lang);
@@ -42,6 +51,9 @@ function show(stepId: string): void {
   for (const id of ['step-connect', 'step-choose', 'step-write', 'step-done']) {
     $(id).hidden = id !== stepId;
   }
+  // Przywracanie zostaje na ekranie od chwili polaczenia - to droga ratunkowa,
+  // a nie kolejny krok kreatora.
+  $('restore').hidden = stepId === 'step-connect';
 }
 
 /** Przepisuje wszystkie napisy na aktualny jezyk. */
@@ -71,6 +83,9 @@ function applyTexts(): void {
     'btn-write': d.write,
     't-dont-unplug': d.dontUnplug,
     't-done-title': d.doneTitle,
+    't-restore-title': d.restoreTitle,
+    't-restore-lead': d.restoreLead,
+    'btn-restore': d.restoreDo,
     'btn-restart': d.again,
   };
   for (const [id, text] of Object.entries(map)) $(id).textContent = text;
@@ -240,19 +255,80 @@ async function writeToRadio(): Promise<void> {
     // Pracujemy na kopii, zeby obraz z radia zostal nietkniety na wypadek ponowienia.
     const image = radioImage.slice();
     writeChannelsIntoImage(image, result.channels);
+
+    writing = true;
     await writeChannels(transport, image, setProgress);
 
     const d = tr();
     const parts = [d.doneText(result.channels.length)];
     if (result.dropped > 0) parts.push(d.doneDropped(result.dropped));
+
+    // Radio potwierdza kazdy blok, ale potwierdzenie znaczy "odebralem",
+    // nie "zapisalem poprawnie". Sprawdzamy odczytem.
+    btn.textContent = d.verifying;
+    parts.push(await verifyWritten(image));
+
     parts.push(d.doneRestart);
     $('done-text').textContent = parts.join(' ');
     show('step-done');
   } catch (err) {
     showError(err);
   } finally {
+    writing = false;
     btn.disabled = false;
     btn.textContent = tr().write;
+  }
+}
+
+/**
+ * Sprawdza odczytem, czy w radiu jest to, co wyslalismy, i zwraca zdanie do podsumowania.
+ *
+ * Nieudany odczyt to co innego niz niezgodnosc: zapis mogl sie powiesc, a radio
+ * po prostu zakonczylo sesje. Nie strasz uzytkownika bledem, ktorego nie bylo.
+ */
+async function verifyWritten(image: Uint8Array): Promise<string> {
+  const d = tr();
+  if (!transport) return d.verifySkipped;
+  try {
+    const result = await verifyChannels(transport, image, setProgress);
+    return result.ok ? d.verifyOk : d.verifyFail;
+  } catch {
+    return d.verifySkipped;
+  }
+}
+
+/** Wgrywa do radia obraz z pliku kopii zapasowej. */
+async function restoreFromFile(file: File): Promise<void> {
+  if (!transport) return;
+  $('error').hidden = true;
+  const d = tr();
+  const btn = $<HTMLButtonElement>('btn-restore');
+  const status = $('restore-status');
+
+  const data = new Uint8Array(await file.arrayBuffer());
+  if (!looksLikeUv5rImage(data)) {
+    // Wgranie obrazu z innego modelu zamienia radio w cegle, a uzytkownik
+    // siegajacy po kopie zwykle juz ma klopot i drugi blad by go dobil.
+    showError(new RadioError(d.restoreBadFile));
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = d.restoring;
+  status.hidden = true;
+  try {
+    writing = true;
+    await writeChannels(transport, data, setProgress);
+    status.textContent = `${d.restoreDone} ${await verifyWritten(data)}`;
+    status.hidden = false;
+    // Po przywroceniu obraz w pamieci programu ma odpowiadac stanowi radia.
+    radioImage = data;
+  } catch (err) {
+    showError(err);
+  } finally {
+    writing = false;
+    btn.disabled = false;
+    btn.textContent = d.restoreDo;
   }
 }
 
@@ -290,6 +366,22 @@ function init(): void {
   $('btn-backup').addEventListener('click', downloadBackup);
   $('btn-write').addEventListener('click', writeToRadio);
   $('btn-restart').addEventListener('click', () => show('step-choose'));
+
+  const fileInput = $<HTMLInputElement>('restore-file');
+  fileInput.addEventListener('change', () => {
+    $<HTMLButtonElement>('btn-restore').disabled = !fileInput.files?.length;
+  });
+  $('btn-restore').addEventListener('click', () => {
+    const file = fileInput.files?.[0];
+    if (file) void restoreFromFile(file);
+  });
+
+  // Zamkniecie karty w polowie zapisu zostawia radio z polowa kanalow.
+  window.addEventListener('beforeunload', (e) => {
+    if (!writing) return;
+    e.preventDefault();
+    e.returnValue = tr().leaveWarning;
+  });
 }
 
 init();

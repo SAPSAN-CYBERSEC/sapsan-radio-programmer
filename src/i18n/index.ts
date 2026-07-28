@@ -27,6 +27,18 @@ interface Dict {
   placeHint: string;
   showFreqs: (n: number) => string;
 
+  restoreTitle: string;
+  restoreLead: string;
+  restoreDo: string;
+  restoring: string;
+  restoreDone: string;
+  restoreBadFile: string;
+  verifying: string;
+  verifyOk: string;
+  verifyFail: string;
+  verifySkipped: string;
+  leaveWarning: string;
+
   step1: string;
   connectHint1: string;
   connectHint2: string;
@@ -132,6 +144,17 @@ const en: Dict = {
   placeNone: '— pick a place —',
   placeHint: 'Polish emergency service channels depend on the place. Pick one to see them.',
   showFreqs: (n) => `Show all ${n} frequencies`,
+  restoreTitle: 'Restore from a backup',
+  restoreLead: 'Have a backup file from an earlier session? Pick it and the radio goes back to how it was.',
+  restoreDo: 'Restore to radio',
+  restoring: 'Restoring...',
+  restoreDone: 'Radio restored from the backup. Switch it off and on again.',
+  restoreBadFile: 'That file does not look like a backup of this radio family. Pick the .img file this tool saved for you.',
+  verifying: 'Checking what landed in the radio...',
+  verifyOk: 'Checked against the radio, everything matches.',
+  verifyFail: 'What is in the radio does not match what was sent. Check the cable and plug, then write again.',
+  verifySkipped: 'Could not read the radio back to check it. Switch the radio off and on and see whether the channels are there.',
+  leaveWarning: 'Writing to the radio is still in progress.',
   countries: { US: 'United States', PL: 'Poland', DE: 'Germany', CZ: 'Czechia' },
 };
 
@@ -204,6 +227,17 @@ const pl: Dict = {
   placeNone: '— wybierz miejscowość —',
   placeHint: 'Kanały polskich służb zależą od miejscowości. Wybierz ją, żeby je zobaczyć.',
   showFreqs: (n) => `Pokaż wszystkie ${n} częstotliwości`,
+  restoreTitle: 'Przywróć z kopii zapasowej',
+  restoreLead: 'Masz plik kopii z wcześniejszego ustawiania? Wskaż go, a radio wróci do poprzedniego stanu.',
+  restoreDo: 'Przywróć do radia',
+  restoring: 'Przywracam...',
+  restoreDone: 'Radio przywrócone z kopii. Wyłącz je i włącz ponownie.',
+  restoreBadFile: 'Ten plik nie wygląda na kopię radia z tej rodziny. Wskaż plik .img zapisany przez to narzędzie.',
+  verifying: 'Sprawdzam, co trafiło do radia...',
+  verifyOk: 'Sprawdzone z radiem, wszystko się zgadza.',
+  verifyFail: 'To, co jest w radiu, nie zgadza się z tym, co zostało wysłane. Sprawdź kabel i wtyk, potem zapisz jeszcze raz.',
+  verifySkipped: 'Nie udało się odczytać radia do sprawdzenia. Wyłącz radio i włącz ponownie, zobacz czy kanały są na miejscu.',
+  leaveWarning: 'Zapis do radia jeszcze trwa.',
   countries: { US: 'Stany Zjednoczone', PL: 'Polska', DE: 'Niemcy', CZ: 'Czechy' },
 };
 
@@ -276,6 +310,17 @@ const de: Dict = {
   placeNone: '— Ort wählen —',
   placeHint: 'Kanäle polnischer Dienste hängen vom Ort ab. Wähle einen, um sie zu sehen.',
   showFreqs: (n) => `Alle ${n} Frequenzen anzeigen`,
+  restoreTitle: 'Aus einer Sicherung wiederherstellen',
+  restoreLead: 'Hast du eine Sicherungsdatei von früher? Wähle sie aus, dann kehrt das Gerät in den alten Zustand zurück.',
+  restoreDo: 'Auf das Gerät zurückspielen',
+  restoring: 'Stelle wieder her...',
+  restoreDone: 'Gerät aus der Sicherung wiederhergestellt. Schalte es aus und wieder ein.',
+  restoreBadFile: 'Diese Datei sieht nicht nach einer Sicherung dieser Gerätefamilie aus. Wähle die .img-Datei, die dieses Werkzeug gespeichert hat.',
+  verifying: 'Prüfe, was im Gerät gelandet ist...',
+  verifyOk: 'Mit dem Gerät abgeglichen, alles stimmt.',
+  verifyFail: 'Der Inhalt des Geräts stimmt nicht mit dem Gesendeten überein. Prüfe Kabel und Stecker und schreibe erneut.',
+  verifySkipped: 'Das Gerät ließ sich zur Prüfung nicht auslesen. Schalte es aus und wieder ein und sieh nach, ob die Kanäle da sind.',
+  leaveWarning: 'Das Schreiben ins Gerät läuft noch.',
   countries: { US: 'Vereinigte Staaten', PL: 'Polen', DE: 'Deutschland', CZ: 'Tschechien' },
 };
 
@@ -348,6 +393,17 @@ const cs: Dict = {
   placeNone: '— vyber místo —',
   placeHint: 'Kanály polských složek závisí na místě. Vyber ho, aby se zobrazily.',
   showFreqs: (n) => `Zobrazit všech ${n} frekvencí`,
+  restoreTitle: 'Obnovit ze zálohy',
+  restoreLead: 'Máš soubor zálohy z dřívějška? Vyber ho a vysílačka se vrátí do původního stavu.',
+  restoreDo: 'Obnovit do vysílačky',
+  restoring: 'Obnovuji...',
+  restoreDone: 'Vysílačka obnovena ze zálohy. Vypni ji a zase zapni.',
+  restoreBadFile: 'Tento soubor nevypadá jako záloha vysílačky z této rodiny. Vyber soubor .img, který uložil tento nástroj.',
+  verifying: 'Kontroluji, co se do vysílačky zapsalo...',
+  verifyOk: 'Zkontrolováno proti vysílačce, vše sedí.',
+  verifyFail: 'To, co je ve vysílačce, neodpovídá odeslanému. Zkontroluj kabel a konektor a zapiš znovu.',
+  verifySkipped: 'Vysílačku se nepodařilo přečíst ke kontrole. Vypni ji a zapni a podívej se, jestli kanály jsou na místě.',
+  leaveWarning: 'Zápis do vysílačky ještě probíhá.',
   countries: { US: 'Spojené státy', PL: 'Polsko', DE: 'Německo', CZ: 'Česko' },
 };
 

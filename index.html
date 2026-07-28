@@ -67,6 +67,16 @@
         <div class="progress" id="progress" hidden><div class="bar" id="bar"></div></div>
       </section>
 
+      <!-- Widoczne po polaczeniu, niezaleznie od tego, na ktorym kroku jest uzytkownik:
+           kto siega po kopie zapasowa, zwykle ma juz klopot i nie chce przechodzic kreatora. -->
+      <section class="step restore" id="restore" hidden>
+        <h2 id="t-restore-title"></h2>
+        <p class="lead" id="t-restore-lead"></p>
+        <input type="file" id="restore-file" accept=".img,application/octet-stream" />
+        <button class="big" id="btn-restore" disabled></button>
+        <p class="ok" id="restore-status" hidden></p>
+      </section>
+
       <section class="step done" id="step-done" hidden>
         <h2 id="t-done-title"></h2>
         <p class="lead" id="done-text"></p>
