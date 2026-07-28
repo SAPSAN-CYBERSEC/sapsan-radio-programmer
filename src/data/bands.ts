@@ -38,12 +38,16 @@ export interface FrequencySet {
 
 const MHz = (v: number) => Math.round(v * 1_000_000);
 
-/** Skrot na kanal simpleksowy waskopasmowy - tak wyglada wiekszosc wpisow. */
+/**
+ * Skrot na kanal simpleksowy waskopasmowy - tak wyglada wiekszosc wpisow.
+ * Moc domyslnie pelna: uzytkownik obniza ja swiadomie w arkuszu, a nie odkrywa
+ * po fakcie, ze radio nadaje slabiej, niz moglo.
+ */
 const ch = (name: string, freq: number, bandwidth: Bandwidth = 'narrow'): PresetChannel => ({
   name,
   rx: MHz(freq),
   bandwidth,
-  power: 'low',
+  power: 'high',
 });
 
 /**

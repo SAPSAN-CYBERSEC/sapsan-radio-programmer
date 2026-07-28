@@ -44,7 +44,7 @@ function toChannels(freqs: number[], prefix: string): PresetChannel[] {
     name: `${prefix}${i + 1}`.slice(0, 7),
     rx: MHz(f),
     bandwidth: 'narrow' as const,
-    power: 'low' as const,
+    power: 'high' as const,
   }));
 }
 
@@ -91,7 +91,7 @@ export function nationalServiceSets(): FrequencySet[] {
         name: `PSP ${c.n}`.slice(0, 7),
         rx: MHz(c.f),
         bandwidth: 'narrow' as const,
-        power: 'low' as const,
+        power: 'high' as const,
       })),
     });
   }

@@ -37,14 +37,14 @@ export interface SheetCallbacks {
   onChange(channels: Channel[]): void;
 }
 
-/** Pusty kanal dopisywany przyciskiem - domyslnie w srodku pasma 2 m. */
+/** Pusty kanal dopisywany przyciskiem - domyslnie w srodku pasma 2 m, pelna moc. */
 function blankChannel(): Channel {
   return {
     rxFreq: 145_000_000,
     txFreq: 145_000_000,
     name: '',
     bandwidth: 'narrow',
-    power: 'low',
+    power: 'high',
     scan: true,
   };
 }
