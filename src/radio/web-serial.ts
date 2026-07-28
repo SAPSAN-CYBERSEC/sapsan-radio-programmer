@@ -13,6 +13,15 @@ import { RadioError } from './uv5r-protocol.ts';
 const BAUD_RATE = 9600;
 /** Ile czekamy na odpowiedz radia, zanim uznamy, ze nie odpowie. */
 const READ_TIMEOUT_MS = 1500;
+/**
+ * Pauza po otwarciu portu, zanim wyslemy powitanie.
+ *
+ * Ustalone na fizycznym UV-82 (2026-07-28): powitanie wyslane natychmiast po
+ * otwarciu portu zostaje bez odpowiedzi, to samo powitanie po krotkiej przerwie
+ * dziala za pierwszym razem. Przejsciowka CH340 potrzebuje chwili na ustalenie
+ * stanu linii DTR i RTS - radio odpowiada tylko wtedy, gdy obie sa aktywne.
+ */
+const PORT_SETTLE_MS = 500;
 
 export function isWebSerialSupported(): boolean {
   return typeof navigator !== 'undefined' && 'serial' in navigator;
@@ -51,6 +60,8 @@ export class WebSerialTransport implements Transport {
       );
     }
     await port.open({ baudRate: BAUD_RATE, dataBits: 8, stopBits: 1, parity: 'none' });
+    // Web Serial ustawia DTR i RTS domyslnie, ale przejsciowka potrzebuje chwili.
+    await new Promise((r) => setTimeout(r, PORT_SETTLE_MS));
 
     const t = new WebSerialTransport(port);
     t.reader = port.readable!.getReader();
