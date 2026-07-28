@@ -46,9 +46,28 @@ Zestawy częstotliwości filtrują się po wybranym kraju, żeby lista nie była
 | Kraj | Zestawy |
 |---|---|
 | 🇺🇸 USA | FRS/GMRS (22), MURS (5), 2 m i 70 cm wg ARRL |
-| 🇵🇱 Polska | PMR446, LPD433, PMR-154, 2 m i 70 cm wg IARU R1 |
+| 🇵🇱 Polska | PMR446, LPD433, PMR-154, 2 m i 70 cm wg IARU R1, **służby** |
 | 🇩🇪 Niemcy | PMR446, LPD433, Freenet (6), 2 m i 70 cm wg IARU R1 |
 | 🇨🇿 Czechy | PMR446, LPD433, 2 m i 70 cm wg IARU R1 |
+
+### Polskie służby
+
+Po wybraniu Polski pojawia się trzeci selektor — **miejscowość**. Kanały policji, straży pożarnej,
+pogotowia i straży miejskiej są przypisane do konkretnych miast, więc bez wskazania miejsca lista
+byłaby bezużyteczna.
+
+Dane obejmują **416 miejscowości i województw**. Niezależnie od miejsca dostępne są zestawy
+ogólnokrajowe: numerowane kanały straży pożarnej (53), pasmo morskie VHF (90), PKP (37), straż
+graniczna (41), sieć zarządzania kryzysowego (56), Lasy Państwowe (13), ratownictwo górskie i
+wodne (30).
+
+Dane nie są przepisywane ręcznie — wyciąga je `tools/parse_sluzby.py` i `tools/build_sluzby.py`
+do `src/data/services-pl.json`. Skrypty obchodzą dwie pułapki źródła: atrybut `num=` w HTML nie
+odpowiada wyświetlanej wartości (śmieć po eksporcie z Excela), a wiersze nagłówkowe zawierają
+granice pasm udające kanały.
+
+Nie weszły strony `Inne miasta Polski` i `PSP BF171` — mają sklejone komórki, z których nie da się
+odtworzyć, która częstotliwość należy do którego miasta. Zgadywanie tutaj daje radio, które milczy.
 
 ## Bezpieczeństwo
 
@@ -78,7 +97,10 @@ src/radio/uv5r-protocol.ts  protokół szeregowy: powitanie, odczyt, zapis
 src/radio/web-serial.ts     transport Web Serial
 src/data/bands.ts           zestawy częstotliwości pogrupowane po krajach
 src/data/build-channels.ts  składanie wybranych zestawów w listę kanałów
+src/data/services.ts        polskie służby, zestawy lokalne i krajowe
+src/data/services-pl.json   dane wygenerowane przez tools/ (nie edytować ręcznie)
 src/i18n/                   tłumaczenia EN / PL / DE / CS
+tools/                      skrypty wyciągające dane ze źródła
 src/ui/                     kreator, trzy ekrany
 ```
 
@@ -86,14 +108,14 @@ src/ui/                     kreator, trzy ekrany
 
 Edytora tabeli kanałów (od tego jest CHIRP), wgrywania firmware'u, obsługi DMR, kont użytkownika.
 
-Brakuje też **zestawów służb i przemienników amatorskich per miasto**. To dane, których nie wolno
-zgadywać: kanał obok właściwego oznacza radio milczące, a użytkownik uzna, że narzędzie nie działa.
-Wejdą dopiero ze zweryfikowanego źródła.
+Brakuje **przemienników amatorskich per miasto** oraz służb w Niemczech, Czechach i USA — te dane
+wejdą, gdy znajdzie się dla nich źródło tej samej jakości co polskie.
 
 ## Źródła danych
 
-PMR446, LPD433, PMR-154 — `czestotliwosci.pl.tl`. Freenet — BNetzA. FRS/GMRS i MURS — FCC via
-RadioReference. Pasma amatorskie — bandplan IARU Region 1 (Europa) i ARRL (USA).
+PMR446, LPD433, PMR-154 oraz wszystkie polskie służby — [`czestotliwosci.pl.tl`](https://czestotliwosci.pl.tl).
+Freenet — BNetzA. FRS/GMRS i MURS — FCC via RadioReference. Pasma amatorskie — bandplan
+IARU Region 1 (Europa) i ARRL (USA).
 
 ## Podziękowania i licencja
 

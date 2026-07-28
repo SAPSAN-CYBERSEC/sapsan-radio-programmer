@@ -10,6 +10,7 @@ import { buildChannels } from '../data/build-channels.ts';
 import { writeChannelsIntoImage, CHANNEL_COUNT } from '../radio/uv5r-memory.ts';
 import { identify, readMainMemory, writeChannels, RadioError } from '../radio/uv5r-protocol.ts';
 import { WebSerialTransport, isWebSerialSupported } from '../radio/web-serial.ts';
+import { localServiceSets, nationalServiceSets, placeNames } from '../data/services.ts';
 import { t, DEFAULT_LANG, LANGS, type Lang } from '../i18n/index.ts';
 
 const $ = <T extends HTMLElement>(id: string): T => {
@@ -20,6 +21,8 @@ const $ = <T extends HTMLElement>(id: string): T => {
 
 let lang: Lang = DEFAULT_LANG;
 let country: Country = 'US';
+/** Miejscowosc dla polskich sluzb. Poza Polska nieuzywana. */
+let place: string | null = null;
 let transport: WebSerialTransport | null = null;
 /** Obraz pamieci odczytany z radia. Modyfikujemy kopie, oryginal zostaje na kopie zapasowa. */
 let radioImage: Uint8Array | null = null;
@@ -78,6 +81,14 @@ function applyTexts(): void {
   ).join('');
   countrySel.value = country;
 
+  $('t-place').textContent = d.place;
+  const placeSel = $<HTMLSelectElement>('place');
+  placeSel.innerHTML =
+    `<option value="">${d.placeNone}</option>` +
+    placeNames().map((p) => `<option value="${p}">${p}</option>`).join('');
+  placeSel.value = place ?? '';
+  $('place-wrap').hidden = country !== 'PL';
+
   renderSets();
 }
 
@@ -85,7 +96,7 @@ function applyTexts(): void {
 function renderSets(): void {
   const d = tr();
   const box = $('sets');
-  const available = setsForCountry(country);
+  const available = availableSets();
 
   // Wybor, ktory nie istnieje w nowym kraju, przestaje obowiazywac.
   for (const id of [...selected]) {
@@ -112,11 +123,26 @@ function renderSets(): void {
     });
     box.appendChild(label);
   }
+
+  // W Polsce kanaly sluzb zaleza od miejscowosci - bez jej wyboru lista jest niepelna.
+  if (country === 'PL' && !place) {
+    const hint = document.createElement('p');
+    hint.className = 'note';
+    hint.textContent = d.placeHint;
+    box.appendChild(hint);
+  }
   updateCounter();
 }
 
+/** Wszystkie zestawy widoczne przy obecnym kraju i miejscowosci. */
+function availableSets(): FrequencySet[] {
+  const base = setsForCountry(country);
+  if (country !== 'PL') return base;
+  return [...base, ...localServiceSets(place), ...nationalServiceSets()];
+}
+
 function chosenSets(): FrequencySet[] {
-  return setsForCountry(country).filter((s) => selected.has(s.id));
+  return availableSets().filter((s) => selected.has(s.id));
 }
 
 /** Licznik miejsc. Radio ma ich 128 i uzytkownik musi o tym wiedziec przed zapisem. */
@@ -223,6 +249,13 @@ function init(): void {
 
   $<HTMLSelectElement>('country').addEventListener('change', (e) => {
     country = (e.target as HTMLSelectElement).value as Country;
+    // Miejscowosc dotyczy tylko Polski - przy zmianie kraju traci sens.
+    if (country !== 'PL') place = null;
+    applyTexts();
+  });
+
+  $<HTMLSelectElement>('place').addEventListener('change', (e) => {
+    place = (e.target as HTMLSelectElement).value || null;
     renderSets();
   });
 

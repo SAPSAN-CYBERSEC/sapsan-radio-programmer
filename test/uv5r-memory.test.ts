@@ -30,6 +30,7 @@ import {
   countChannels,
 } from '../src/data/bands.ts';
 import { buildChannels } from '../src/data/build-channels.ts';
+import { localServiceSets, nationalServiceSets, placeNames } from '../src/data/services.ts';
 
 const base: Channel = {
   rxFreq: 145_500_000,
@@ -177,4 +178,56 @@ test('krance tabel nowych krajow zgadzaja sie ze zrodlem', () => {
 test('licznik kanalow sumuje wybrane zestawy', () => {
   assert.equal(countChannels([FRS_GMRS, MURS]), 27);
   assert.equal(countChannels([]), 0);
+});
+
+test('polskie sluzby: zestawy lokalne zaleza od wybranej miejscowosci', () => {
+  // Bez miejscowosci nie ma czego pokazac - inaczej uzytkownik dostalby kanaly z calego kraju.
+  assert.deepEqual(localServiceSets(null), []);
+  assert.deepEqual(localServiceSets('Miasto Ktorego Nie Ma'), []);
+
+  const wroclaw = localServiceSets('Wrocław');
+  assert.ok(wroclaw.length >= 3, 'Wroclaw ma kilka sluzb');
+  const ids = wroclaw.map((s) => s.id);
+  assert.ok(ids.includes('svc-fire') && ids.includes('svc-police'));
+  assert.ok(wroclaw.every((s) => s.countries.includes('PL')));
+  assert.ok(wroclaw.every((s) => s.channels.length > 0));
+});
+
+test('polskie sluzby: nazwy kanalow miesza sie w 7 znakach radia', () => {
+  // Dluzsza nazwa rozjechalaby sie na kolejna pozycje w pamieci.
+  const all = [...localServiceSets('Wrocław'), ...nationalServiceSets()];
+  for (const set of all) {
+    for (const c of set.channels) {
+      assert.ok(c.name.length <= 7, `nazwa "${c.name}" ma ${c.name.length} znakow`);
+    }
+  }
+});
+
+test('polskie sluzby: czestotliwosci mieszcza sie w pasmach radia', () => {
+  // Parser zrodla mogl zlapac date albo numer telefonu - to by trafilo prosto do radia.
+  const all = [...localServiceSets('Kraków'), ...nationalServiceSets()];
+  for (const set of all) {
+    for (const c of set.channels) {
+      const mhz = c.rx / 1_000_000;
+      const ok = (mhz >= 136 && mhz <= 174) || (mhz >= 400 && mhz <= 520);
+      assert.ok(ok, `${set.id}: ${mhz} MHz poza pasmem UV-5R`);
+    }
+  }
+});
+
+test('polskie sluzby: krajowe kanaly strazy maja wlasna numeracje', () => {
+  const fireNat = nationalServiceSets().find((s) => s.id === 'svc-fire-nat');
+  assert.ok(fireNat, 'zestaw krajowych kanalow strazy istnieje');
+  assert.ok(fireNat!.channels.length > 40, 'numeracja krajowa to kilkadziesiat kanalow');
+  // Pasmo KSRG to 148-150 MHz - wartosc spoza niego znaczy blad parsera.
+  assert.ok(fireNat!.channels.every((c) => c.rx >= 148_000_000 && c.rx <= 150_000_000));
+});
+
+test('polskie sluzby: lista miejscowosci zaczyna sie od wojewodztw', () => {
+  const names = placeNames();
+  assert.ok(names.length > 300, `miejscowosci: ${names.length}`);
+  assert.ok(names.includes('Wrocław') && names.includes('Kraków'));
+  // Wojewodztwa pisane wersalikami maja byc na gorze listy, przed miastami.
+  assert.equal(names[0], names[0]!.toUpperCase());
+  assert.ok(names.indexOf('DOLNOŚLĄSKIE') < names.indexOf('Wrocław'));
 });

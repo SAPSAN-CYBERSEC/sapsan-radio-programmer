@@ -22,6 +22,9 @@ interface Dict {
   legal: string;
   country: string;
   language: string;
+  place: string;
+  placeNone: string;
+  placeHint: string;
 
   step1: string;
   connectHint1: string;
@@ -112,7 +115,21 @@ const en: Dict = {
     ham70cmEu: { label: '70 cm amateur (Europe)', desc: 'IARU R1 simplex, calling channel 433.500.' },
     ham2mUs: { label: '2 m amateur (US)', desc: 'ARRL simplex, national calling channel 146.520.' },
     ham70cmUs: { label: '70 cm amateur (US)', desc: 'ARRL simplex, calling channel 446.000.' },
+    svc_fire: { label: 'Fire brigade (local)', desc: 'Local fire service channels for the selected town.' },
+    svc_police: { label: 'Police (local)', desc: 'Local police channels for the selected town.' },
+    svc_ems: { label: 'Ambulance (local)', desc: 'Local emergency medical channels for the selected town.' },
+    svc_municipal: { label: 'Municipal guard (local)', desc: 'Municipal guard channels for the selected town.' },
+    svc_fireNat: { label: 'Fire brigade national channels', desc: 'Nationwide numbered fire service channels.' },
+    svc_marine: { label: 'Marine VHF', desc: 'Polish marine VHF channels.' },
+    svc_rail: { label: 'Railway (PKP)', desc: 'Polish railway operational channels.' },
+    svc_border: { label: 'Border guard', desc: 'Polish border guard channels.' },
+    svc_crisis: { label: 'Crisis management network', desc: 'Provincial crisis management network.' },
+    svc_forest: { label: 'State Forests', desc: 'Polish State Forests channels.' },
+    svc_rescue: { label: 'Mountain and water rescue', desc: 'GOPR, TOPR and WOPR channels.' },
   },
+    place: 'Place',
+  placeNone: '— pick a place —',
+  placeHint: 'Polish emergency service channels depend on the place. Pick one to see them.',
   countries: { US: 'United States', PL: 'Poland', DE: 'Germany', CZ: 'Czechia' },
 };
 
@@ -169,7 +186,21 @@ const pl: Dict = {
     ham70cmEu: { label: 'Pasmo 70 cm (Europa)', desc: 'Simpleks IARU R1, kanał wywoławczy 433,500.' },
     ham2mUs: { label: 'Pasmo 2 m (USA)', desc: 'Simpleks ARRL, kanał wywoławczy 146,520.' },
     ham70cmUs: { label: 'Pasmo 70 cm (USA)', desc: 'Simpleks ARRL, kanał wywoławczy 446,000.' },
+    svc_fire: { label: 'Straż pożarna (lokalnie)', desc: 'Kanały straży pożarnej dla wybranej miejscowości.' },
+    svc_police: { label: 'Policja (lokalnie)', desc: 'Kanały policji dla wybranej miejscowości.' },
+    svc_ems: { label: 'Pogotowie (lokalnie)', desc: 'Kanały pogotowia ratunkowego dla wybranej miejscowości.' },
+    svc_municipal: { label: 'Straż miejska (lokalnie)', desc: 'Kanały straży miejskiej dla wybranej miejscowości.' },
+    svc_fireNat: { label: 'Straż pożarna - kanały krajowe', desc: 'Ogólnopolskie kanały numerowane straży pożarnej.' },
+    svc_marine: { label: 'Pasmo morskie VHF', desc: 'Polskie kanały morskie VHF.' },
+    svc_rail: { label: 'Kolej (PKP)', desc: 'Kanały łączności kolejowej.' },
+    svc_border: { label: 'Straż graniczna', desc: 'Kanały straży granicznej.' },
+    svc_crisis: { label: 'Sieć zarządzania kryzysowego', desc: 'Wojewódzka sieć zarządzania kryzysowego.' },
+    svc_forest: { label: 'Lasy Państwowe', desc: 'Kanały Lasów Państwowych.' },
+    svc_rescue: { label: 'Ratownictwo górskie i wodne', desc: 'Kanały GOPR, TOPR i WOPR.' },
   },
+    place: 'Miejscowość',
+  placeNone: '— wybierz miejscowość —',
+  placeHint: 'Kanały polskich służb zależą od miejscowości. Wybierz ją, żeby je zobaczyć.',
   countries: { US: 'Stany Zjednoczone', PL: 'Polska', DE: 'Niemcy', CZ: 'Czechy' },
 };
 
@@ -226,7 +257,21 @@ const de: Dict = {
     ham70cmEu: { label: '70-cm-Band (Europa)', desc: 'IARU-R1-Simplex, Anrufkanal 433,500.' },
     ham2mUs: { label: '2-m-Band (USA)', desc: 'ARRL-Simplex, Anrufkanal 146,520.' },
     ham70cmUs: { label: '70-cm-Band (USA)', desc: 'ARRL-Simplex, Anrufkanal 446,000.' },
+    svc_fire: { label: 'Feuerwehr (lokal)', desc: 'Feuerwehrkanäle für den gewählten Ort.' },
+    svc_police: { label: 'Polizei (lokal)', desc: 'Polizeikanäle für den gewählten Ort.' },
+    svc_ems: { label: 'Rettungsdienst (lokal)', desc: 'Rettungsdienstkanäle für den gewählten Ort.' },
+    svc_municipal: { label: 'Stadtwache (lokal)', desc: 'Kanäle der Stadtwache für den gewählten Ort.' },
+    svc_fireNat: { label: 'Feuerwehr, landesweite Kanäle', desc: 'Landesweit nummerierte Feuerwehrkanäle.' },
+    svc_marine: { label: 'Seefunk VHF', desc: 'Polnische Seefunkkanäle.' },
+    svc_rail: { label: 'Bahn (PKP)', desc: 'Kanäle des polnischen Bahnbetriebs.' },
+    svc_border: { label: 'Grenzschutz', desc: 'Kanäle des polnischen Grenzschutzes.' },
+    svc_crisis: { label: 'Krisenmanagement-Netz', desc: 'Woiwodschaftsnetz für Krisenmanagement.' },
+    svc_forest: { label: 'Staatsforsten', desc: 'Kanäle der polnischen Staatsforsten.' },
+    svc_rescue: { label: 'Berg- und Wasserrettung', desc: 'Kanäle von GOPR, TOPR und WOPR.' },
   },
+    place: 'Ort',
+  placeNone: '— Ort wählen —',
+  placeHint: 'Kanäle polnischer Dienste hängen vom Ort ab. Wähle einen, um sie zu sehen.',
   countries: { US: 'Vereinigte Staaten', PL: 'Polen', DE: 'Deutschland', CZ: 'Tschechien' },
 };
 
@@ -283,7 +328,21 @@ const cs: Dict = {
     ham70cmEu: { label: 'Pásmo 70 cm (Evropa)', desc: 'Simplex IARU R1, volací kanál 433,500.' },
     ham2mUs: { label: 'Pásmo 2 m (USA)', desc: 'Simplex ARRL, volací kanál 146,520.' },
     ham70cmUs: { label: 'Pásmo 70 cm (USA)', desc: 'Simplex ARRL, volací kanál 446,000.' },
+    svc_fire: { label: 'Hasiči (místní)', desc: 'Kanály hasičů pro vybrané město.' },
+    svc_police: { label: 'Policie (místní)', desc: 'Kanály policie pro vybrané město.' },
+    svc_ems: { label: 'Záchranka (místní)', desc: 'Kanály záchranné služby pro vybrané město.' },
+    svc_municipal: { label: 'Městská policie (místní)', desc: 'Kanály městské policie pro vybrané město.' },
+    svc_fireNat: { label: 'Hasiči, celostátní kanály', desc: 'Celostátně číslované kanály hasičů.' },
+    svc_marine: { label: 'Námořní VHF', desc: 'Polské námořní kanály VHF.' },
+    svc_rail: { label: 'Železnice (PKP)', desc: 'Kanály polské železnice.' },
+    svc_border: { label: 'Pohraniční stráž', desc: 'Kanály polské pohraniční stráže.' },
+    svc_crisis: { label: 'Síť krizového řízení', desc: 'Vojvodská síť krizového řízení.' },
+    svc_forest: { label: 'Státní lesy', desc: 'Kanály polských státních lesů.' },
+    svc_rescue: { label: 'Horská a vodní záchrana', desc: 'Kanály GOPR, TOPR a WOPR.' },
   },
+    place: 'Místo',
+  placeNone: '— vyber místo —',
+  placeHint: 'Kanály polských složek závisí na místě. Vyber ho, aby se zobrazily.',
   countries: { US: 'Spojené státy', PL: 'Polsko', DE: 'Německo', CZ: 'Česko' },
 };
 
