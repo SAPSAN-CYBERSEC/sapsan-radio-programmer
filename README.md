@@ -11,7 +11,14 @@ CHIRP jest znakomity i obsługuje setkę modeli, ale wymaga instalacji i wygląd
 kalkulacyjny. Ktoś, kto właśnie kupił pierwszą krótkofalówkę, nie chce edytora pamięci — chce, żeby
 radio po prostu miało w środku kanały, których będzie słuchał.
 
-Trzy ekrany: podłącz radio, wybierz zestawy kanałów, zapisz.
+Cztery ekrany: podłącz radio, wybierz zestawy kanałów, **sprawdź i popraw arkusz**, zapisz.
+
+Arkusz jest po to, żeby narzędzie było użyteczne, a nie tylko wygodne: wybrane zestawy są punktem
+wyjścia, nie ostatnim słowem. Można dopisać własną częstotliwość, zmienić nazwę, ustawić ton CTCSS
+dla przemiennika, wyrzucić niepotrzebne kanały albo wyczyścić wszystko i zbudować listę od zera.
+
+Częstotliwość spoza pasma radia dostaje ostrzeżenie, ale **nie blokuje zapisu** — to decyzja
+użytkownika, nie nasza.
 
 ## Jak to działa
 
@@ -119,6 +126,13 @@ a obszar pomocniczy od 0x1EC0 (limity pasm, komunikat powitalny) nie jest nawet 
 Program nie ogranicza tego, co można wpisać do radia. Jedna informacja o zgodności z lokalnymi
 przepisami stoi na stronie głównej — reszta to decyzja użytkownika.
 
+## Pułapka przy pisaniu kodu
+
+Testy chodzą na `node --experimental-strip-types`, który **nie parsuje skróconych właściwości
+konstruktora** (`constructor(private readonly x: T) {}`). Napotkanie takiego zapisu wywala cały plik
+testowy z `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`, i to zanim wykona się choć jeden test. Pola
+deklarujemy jawnie.
+
 ## Uruchomienie
 
 ```bash
@@ -140,12 +154,14 @@ src/data/services.ts        polskie służby, zestawy lokalne i krajowe
 src/data/services-pl.json   dane wygenerowane przez tools/ (nie edytować ręcznie)
 src/i18n/                   tłumaczenia EN / PL / DE / CS
 tools/                      skrypty wyciągające dane ze źródła
-src/ui/                     kreator, trzy ekrany
+src/ui/sheet.ts             arkusz kanałów: edycja, walidacja wpisów
+src/ui/                     kreator, cztery ekrany
 ```
 
 ## Czego tu nie ma
 
-Edytora tabeli kanałów (od tego jest CHIRP), wgrywania firmware'u, obsługi DMR, kont użytkownika.
+Ustawień radia (squelch, VOX, podświetlenie, timeout i kilkadziesiąt innych pól — tam CHIRP ma
+piętnaście lat przewagi), wgrywania firmware'u, obsługi DMR, kont użytkownika.
 
 Brakuje **przemienników amatorskich per miasto** oraz służb w Niemczech, Czechach i USA — te dane
 wejdą, gdy znajdzie się dla nich źródło tej samej jakości co polskie.

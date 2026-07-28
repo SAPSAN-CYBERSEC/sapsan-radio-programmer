@@ -394,3 +394,124 @@ button.big.danger:disabled {
   border: 1px solid var(--obwodka);
   border-radius: 8px;
 }
+
+/* Arkusz kanalow */
+.sheet-wrap {
+  max-height: 26rem;
+  overflow: auto;
+  margin-bottom: 1rem;
+  border: 1px solid var(--obwodka);
+  border-radius: 8px;
+}
+
+table.sheet {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+table.sheet th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.5rem 0.4rem;
+  background: #eceff3;
+  text-align: left;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+table.sheet td {
+  padding: 0.25rem 0.4rem;
+  border-top: 1px solid #eceff3;
+}
+
+table.sheet .col-num {
+  width: 2.5rem;
+  color: #4a545f;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+table.sheet .col-flag {
+  text-align: center;
+}
+
+table.sheet input[type='text'],
+table.sheet select {
+  width: 100%;
+  min-width: 4.5rem;
+  padding: 0.35rem 0.4rem;
+  font-size: 0.95rem;
+  color: var(--tekst);
+  background: var(--karta);
+  border: 1px solid var(--obwodka);
+  border-radius: 6px;
+}
+
+table.sheet input.f-rx,
+table.sheet input.f-tx {
+  font-variant-numeric: tabular-nums;
+}
+
+table.sheet input[type='checkbox'] {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+/* Czestotliwosc poza pasmem radia - informujemy, ale nie blokujemy zapisu */
+table.sheet tr.out-of-band input.f-rx {
+  border-color: var(--ostrzezenie);
+  background: #fdf6ec;
+}
+
+.row-del {
+  min-width: 2rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--blad);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.row-del:hover {
+  border-color: var(--blad);
+  background: #fdeaea;
+}
+
+.sheet-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+button.small {
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--akcent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button.small.ghost {
+  color: var(--akcent);
+  background: transparent;
+  border: 1px solid var(--obwodka);
+}
+
+button.small:hover {
+  background: var(--akcent-ciemny);
+}
+
+button.small.ghost:hover {
+  color: #fff;
+  background: var(--akcent);
+}

@@ -28,6 +28,24 @@ interface Dict {
   showFreqs: (n: number) => string;
   model: string;
 
+  sheetTitle: string;
+  sheetLead: string;
+  colNum: string;
+  colName: string;
+  colRx: string;
+  colTx: string;
+  colTone: string;
+  colWide: string;
+  colPower: string;
+  addRow: string;
+  removeRow: string;
+  clearAll: string;
+  sameAsRx: string;
+  outOfBand: string;
+  sheetFull: (max: number) => string;
+  toSheet: string;
+  toWrite: string;
+
   restoreTitle: string;
   restoreLead: string;
   restoreDo: string;
@@ -146,6 +164,23 @@ const en: Dict = {
   placeHint: 'Polish emergency service channels depend on the place. Pick one to see them.',
   showFreqs: (n) => `Show all ${n} frequencies`,
   model: 'Which radio is it?',
+  sheetTitle: 'Check what goes into the radio',
+  sheetLead: 'Edit anything you like, add your own channels or remove the ones you do not need.',
+  colNum: 'No.',
+  colName: 'Name',
+  colRx: 'Receive',
+  colTx: 'Transmit',
+  colTone: 'Tone',
+  colWide: 'Wide',
+  colPower: 'Power',
+  addRow: 'Add a channel',
+  removeRow: 'Remove',
+  clearAll: 'Clear all',
+  sameAsRx: 'same as receive',
+  outOfBand: 'outside this radio band',
+  toSheet: 'Next',
+  toWrite: 'Next',
+  sheetFull: (max) => `The list is full - the radio holds ${max} channels.`,
   restoreTitle: 'Restore from a backup',
   restoreLead: 'Have a backup file from an earlier session? Pick it and the radio goes back to how it was.',
   restoreDo: 'Restore to radio',
@@ -230,6 +265,23 @@ const pl: Dict = {
   placeHint: 'Kanały polskich służb zależą od miejscowości. Wybierz ją, żeby je zobaczyć.',
   showFreqs: (n) => `Pokaż wszystkie ${n} częstotliwości`,
   model: 'Jakie to radio?',
+  sheetTitle: 'Sprawdź, co pójdzie do radia',
+  sheetLead: 'Zmień co chcesz, dopisz własne kanały albo usuń te, których nie potrzebujesz.',
+  colNum: 'Nr',
+  colName: 'Nazwa',
+  colRx: 'Odbiór',
+  colTx: 'Nadawanie',
+  colTone: 'Ton',
+  colWide: 'Szeroki',
+  colPower: 'Moc',
+  addRow: 'Dodaj kanał',
+  removeRow: 'Usuń',
+  clearAll: 'Wyczyść wszystko',
+  sameAsRx: 'tak jak odbiór',
+  outOfBand: 'poza pasmem tego radia',
+  toSheet: 'Dalej',
+  toWrite: 'Dalej',
+  sheetFull: (max) => `Lista jest pełna - radio mieści ${max} kanałów.`,
   restoreTitle: 'Przywróć z kopii zapasowej',
   restoreLead: 'Masz plik kopii z wcześniejszego ustawiania? Wskaż go, a radio wróci do poprzedniego stanu.',
   restoreDo: 'Przywróć do radia',
@@ -314,6 +366,23 @@ const de: Dict = {
   placeHint: 'Kanäle polnischer Dienste hängen vom Ort ab. Wähle einen, um sie zu sehen.',
   showFreqs: (n) => `Alle ${n} Frequenzen anzeigen`,
   model: 'Welches Gerät ist es?',
+  sheetTitle: 'Prüfe, was ins Gerät kommt',
+  sheetLead: 'Ändere was du willst, füge eigene Kanäle hinzu oder entferne überflüssige.',
+  colNum: 'Nr.',
+  colName: 'Name',
+  colRx: 'Empfang',
+  colTx: 'Senden',
+  colTone: 'Ton',
+  colWide: 'Breit',
+  colPower: 'Leistung',
+  addRow: 'Kanal hinzufügen',
+  removeRow: 'Entfernen',
+  clearAll: 'Alles löschen',
+  sameAsRx: 'wie Empfang',
+  outOfBand: 'außerhalb des Gerätebands',
+  toSheet: 'Weiter',
+  toWrite: 'Weiter',
+  sheetFull: (max) => `Die Liste ist voll - das Gerät fasst ${max} Kanäle.`,
   restoreTitle: 'Aus einer Sicherung wiederherstellen',
   restoreLead: 'Hast du eine Sicherungsdatei von früher? Wähle sie aus, dann kehrt das Gerät in den alten Zustand zurück.',
   restoreDo: 'Auf das Gerät zurückspielen',
@@ -398,6 +467,23 @@ const cs: Dict = {
   placeHint: 'Kanály polských složek závisí na místě. Vyber ho, aby se zobrazily.',
   showFreqs: (n) => `Zobrazit všech ${n} frekvencí`,
   model: 'Jaká je to vysílačka?',
+  sheetTitle: 'Zkontroluj, co půjde do vysílačky',
+  sheetLead: 'Uprav co chceš, přidej vlastní kanály nebo odeber ty, které nepotřebuješ.',
+  colNum: 'Č.',
+  colName: 'Název',
+  colRx: 'Příjem',
+  colTx: 'Vysílání',
+  colTone: 'Tón',
+  colWide: 'Široký',
+  colPower: 'Výkon',
+  addRow: 'Přidat kanál',
+  removeRow: 'Odebrat',
+  clearAll: 'Smazat vše',
+  sameAsRx: 'stejně jako příjem',
+  outOfBand: 'mimo pásmo vysílačky',
+  toSheet: 'Dál',
+  toWrite: 'Dál',
+  sheetFull: (max) => `Seznam je plný - vysílačka pojme ${max} kanálů.`,
   restoreTitle: 'Obnovit ze zálohy',
   restoreLead: 'Máš soubor zálohy z dřívějška? Vyber ho a vysílačka se vrátí do původního stavu.',
   restoreDo: 'Obnovit do vysílačky',

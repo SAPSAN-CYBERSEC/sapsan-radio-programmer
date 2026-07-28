@@ -21,6 +21,7 @@ import {
 import { WebSerialTransport, isWebSerialSupported } from '../radio/web-serial.ts';
 import { localServiceSets, nationalServiceSets, placeNames } from '../data/services.ts';
 import { t, DEFAULT_LANG, LANGS, formatFreq, type Lang } from '../i18n/index.ts';
+import { ChannelSheet } from './sheet.ts';
 
 const $ = <T extends HTMLElement>(id: string): T => {
   const el = document.getElementById(id);
@@ -41,6 +42,8 @@ let writing = false;
 /** Model wskazany przez uzytkownika - wysylamy jedna sekwencje powitalna zamiast zgadywac. */
 let family: RadioFamily = 'uv5r';
 const selected = new Set<string>();
+/** Arkusz z lista kanalow - to on, a nie wybor zestawow, decyduje co idzie do radia. */
+let sheet: ChannelSheet;
 
 const tr = () => t(lang);
 
@@ -52,7 +55,7 @@ function showError(err: unknown): void {
 }
 
 function show(stepId: string): void {
-  for (const id of ['step-connect', 'step-choose', 'step-write', 'step-done']) {
+  for (const id of ['step-connect', 'step-choose', 'step-sheet', 'step-write', 'step-done']) {
     $(id).hidden = id !== stepId;
   }
   // Przywracanie zostaje na ekranie od chwili polaczenia - to droga ratunkowa,
@@ -88,6 +91,11 @@ function applyTexts(): void {
     't-dont-unplug': d.dontUnplug,
     't-done-title': d.doneTitle,
     't-model': d.model,
+    't-sheet-title': d.sheetTitle,
+    't-sheet-lead': d.sheetLead,
+    'btn-add-row': d.addRow,
+    'btn-clear': d.clearAll,
+    'btn-to-write': d.toWrite,
     't-restore-title': d.restoreTitle,
     't-restore-lead': d.restoreLead,
     'btn-restore': d.restoreDo,
@@ -255,18 +263,19 @@ async function writeToRadio(): Promise<void> {
   btn.textContent = tr().writing;
 
   try {
-    const result = buildChannels(chosenSets());
+    // Zrodlem prawdy jest arkusz, nie zaznaczone kafelki - uzytkownik mogl tam
+    // wszystko pozmieniac, dopisac wlasne kanaly albo skasowac polowe.
+    const channels = sheet.getChannels();
 
     // Pracujemy na kopii, zeby obraz z radia zostal nietkniety na wypadek ponowienia.
     const image = radioImage.slice();
-    writeChannelsIntoImage(image, result.channels);
+    writeChannelsIntoImage(image, channels);
 
     writing = true;
     await writeChannels(transport, image, setProgress);
 
     const d = tr();
-    const parts = [d.doneText(result.channels.length)];
-    if (result.dropped > 0) parts.push(d.doneDropped(result.dropped));
+    const parts = [d.doneText(channels.length)];
 
     // Radio potwierdza kazdy blok, ale potwierdzenie znaczy "odebralem",
     // nie "zapisalem poprawnie". Sprawdzamy odczytem.
@@ -337,7 +346,14 @@ async function restoreFromFile(file: File): Promise<void> {
   }
 }
 
+function updateSheetCounter(): void {
+  $('sheet-counter').textContent = sheet.summary();
+  $<HTMLButtonElement>('btn-to-write').disabled = sheet.getChannels().length === 0;
+}
+
 function init(): void {
+  sheet = new ChannelSheet($('sheet'), { onChange: () => updateSheetCounter() });
+
   const modelSel = $<HTMLSelectElement>('model');
   modelSel.innerHTML = MODELS.map((m) => `<option value="${m.id}">${m.label}</option>`).join('');
   modelSel.addEventListener('change', () => {
@@ -349,7 +365,9 @@ function init(): void {
   langSel.value = lang;
   langSel.addEventListener('change', () => {
     lang = langSel.value as Lang;
+    sheet.setLang(lang);
     applyTexts();
+    updateSheetCounter();
   });
 
   $<HTMLSelectElement>('country').addEventListener('change', (e) => {
@@ -364,6 +382,7 @@ function init(): void {
     renderSets();
   });
 
+  sheet.setLang(lang);
   applyTexts();
 
   if (!isWebSerialSupported()) {
@@ -373,7 +392,21 @@ function init(): void {
   }
 
   $('btn-connect').addEventListener('click', connect);
-  $('btn-next').addEventListener('click', () => show('step-write'));
+  $('btn-next').addEventListener('click', () => {
+    // Wybrane zestawy sa punktem wyjscia dla arkusza, nie ostatnim slowem.
+    sheet.setChannels(buildChannels(chosenSets()).channels);
+    updateSheetCounter();
+    show('step-sheet');
+  });
+  $('btn-to-write').addEventListener('click', () => show('step-write'));
+  $('btn-add-row').addEventListener('click', () => {
+    sheet.addBlank();
+    updateSheetCounter();
+  });
+  $('btn-clear').addEventListener('click', () => {
+    sheet.clear();
+    updateSheetCounter();
+  });
   $('btn-backup').addEventListener('click', downloadBackup);
   $('btn-write').addEventListener('click', writeToRadio);
   $('btn-restart').addEventListener('click', () => show('step-choose'));
