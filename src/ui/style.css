@@ -130,6 +130,14 @@ button.big.danger:hover:not(:disabled) {
   background: #7d2c00;
 }
 
+/* Musi stac po .danger, inaczej czerwone tlo wygra i zablokowany przycisk */
+/* bedzie wygladal na gotowy do klikniecia. */
+button.big:disabled,
+button.big.danger:disabled {
+  background: #9aa3ad;
+  cursor: not-allowed;
+}
+
 /* Kafelki z zestawami czestotliwosci */
 .sets {
   display: grid;
