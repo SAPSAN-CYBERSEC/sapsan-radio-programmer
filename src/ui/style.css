@@ -373,3 +373,24 @@ button.big.danger:disabled {
   border: 1px solid var(--obwodka);
   border-radius: 8px;
 }
+
+/* Wybor modelu na pierwszym ekranie */
+.model-pick {
+  display: block;
+  margin-bottom: 1.25rem;
+  font-weight: 600;
+}
+
+.model-pick select {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.7rem;
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--tekst);
+  background: var(--karta);
+  border: 1px solid var(--obwodka);
+  border-radius: 8px;
+}

@@ -33,6 +33,30 @@ export const MAGICS = {
 
 export type RadioFamily = keyof typeof MAGICS;
 
+/**
+ * Modele do wyboru przez uzytkownika, z rodzina protokolu kazdego z nich.
+ *
+ * Wybor jest swiadoma decyzja, a nie ulatwieniem: radio, ktore dostanie nie swoja
+ * sekwencje powitalna, milknie na kilkanascie sekund, wiec zgadywanie po kolei
+ * bywa wolniejsze i zawodne. Uzytkownik i tak wie, co kupil.
+ */
+export const MODELS: Array<{ id: string; label: string; family: RadioFamily }> = [
+  { id: 'uv5r', label: 'UV-5R / UV-5RA / UV-5RB / UV-5RC / BF-F8 / GT-3', family: 'uv5r' },
+  { id: 'uv82', label: 'UV-82 / UV-82HP / P15UV', family: 'uv82' },
+  { id: 'uv6', label: 'UV-6 / UV-6R', family: 'uv6' },
+  { id: 'bfA58', label: 'BF-A58 / BF-9700', family: 'bfA58' },
+  { id: 'uv5rOrig', label: 'UV-5R (starsze, sprzed BFB291)', family: 'uv5rOrig' },
+];
+
+/**
+ * Ile czekac po nietrafionej sekwencji powitalnej, zanim sprobujemy nastepnej.
+ *
+ * Zmierzone na fizycznym UV-82 (2026-07-28): po zlej sekwencji radio milknie
+ * i nie wraca do rozmowy nawet po 5 s czekania. Odblokowuje je dopiero zamkniecie
+ * i ponowne otwarcie portu, przy czym 300 ms przerwy to za malo, a 1000 ms wystarcza.
+ */
+const RETRY_DELAY_MS = 1000;
+
 /** Kolejnosc prob rozpoznania. UV-5R pierwszy, bo to najczesciej sprzedawany model. */
 const IDENT_ORDER: RadioFamily[] = ['uv5r', 'uv82', 'uv5rOrig', 'uv6', 'bfA58'];
 
@@ -42,6 +66,13 @@ export interface Transport {
   read(length: number): Promise<Uint8Array>;
   /** Czysci bufor wejsciowy z resztek poprzedniej rozmowy. */
   flush(): Promise<void>;
+  /**
+   * Zamyka i otwiera polaczenie od nowa.
+   *
+   * Potrzebne przy rozpoznawaniu modelu: radio, ktore dostalo nie swoja sekwencje
+   * powitalna, przestaje odpowiadac i samo czekanie go nie odblokowuje.
+   */
+  reconnect?(): Promise<void>;
 }
 
 export class RadioError extends Error {
@@ -99,11 +130,34 @@ export interface IdentifiedRadio {
  * Rozpoznaje podlaczone radio, probujac kolejnych sekwencji powitalnych.
  * Zwraca rodzine protokolu, nie nazwe handlowa - jeden protokol obsluguje wiele modeli.
  */
-export async function identify(t: Transport): Promise<IdentifiedRadio> {
+export async function identify(t: Transport, only?: RadioFamily): Promise<IdentifiedRadio> {
+  // Gdy wiemy, co jest podlaczone, wysylamy jedna sekwencje i koniec.
+  //
+  // Zmierzone na fizycznym UV-82 (2026-07-28): radio, ktore dostalo NIE SWOJA
+  // sekwencje powitalna, milknie na kilkanascie sekund - ani czekanie 5 s, ani
+  // ponowne otwarcie portu po 1 s go nie odblokowuje. Przy wysylaniu wylacznie
+  // wlasciwej sekwencji odpowiada za kazdym razem. Dlatego zgadywanie modelu jest
+  // droga awaryjna, a nie domyslna.
+  if (only) {
+    const ident = await tryIdent(t, MAGICS[only]);
+    if (ident) return { family: only, ident };
+    throw new RadioError(
+      'Radio nie odpowiedzialo',
+      'Sprawdz, czy wybrany model zgadza sie z tym podlaczonym, czy radio jest wlaczone i czy wtyk siedzi do konca.',
+    );
+  }
+
   for (const family of IDENT_ORDER) {
     const ident = await tryIdent(t, MAGICS[family]);
     if (ident) return { family, ident };
-    await sleep(200);
+    // Samo czekanie nie wystarczy - radio trzeba odlaczyc i podlaczyc na nowo.
+    // Transport bez `reconnect` (np. atrapa w testach) po prostu odczekuje.
+    if (t.reconnect) {
+      await sleep(RETRY_DELAY_MS);
+      await t.reconnect();
+    } else {
+      await sleep(RETRY_DELAY_MS);
+    }
   }
   throw new RadioError(
     'Nie udalo sie nawiazac polaczenia z radiem',
@@ -225,15 +279,17 @@ export async function verifyChannels(
   t: Transport,
   expected: Uint8Array,
   onProgress?: ProgressFn,
+  family?: RadioFamily,
 ): Promise<VerifyResult> {
-  // Nie wiemy z gory, czy po zapisie radio zostaje w sesji programowania,
-  // czy z niej wychodzi - to zalezy od wersji oprogramowania. Zamiast zgadywac,
-  // probujemy czytac od razu, a gdy sie nie uda, witamy sie ponownie.
+  // Zmierzone na fizycznym UV-82 (2026-07-28): po zapisie radio konczy sesje
+  // i nie odpowiada na odczyt. Trzeba odlaczyc sie i przywitac na nowo - samo
+  // ponowne powitanie na tym samym polaczeniu nie wystarcza.
   try {
     return await readAndCompare(t, expected, onProgress);
   } catch {
     await t.flush();
-    await identify(t);
+    if (t.reconnect) await t.reconnect();
+    await identify(t, family);
     return await readAndCompare(t, expected, onProgress);
   }
 }

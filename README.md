@@ -30,18 +30,32 @@ pamięć radia blokami po 64 bajty, my podmieniamy obszar kanałów i zapisujemy
 
 ## Sprawdzone na sprzęcie
 
-**2026-07-28, Baofeng UV-82, kabel z układem CH340 (`/dev/cu.wchusbserial1410`), macOS:**
-powitanie, rozpoznanie modelu i pełny odczyt 6144 bajtów w 10,4 s. Dekoder odtworzył z obrazu
-oba zajęte kanały (144,725 i 435,725 MHz) razem z szerokością, mocą i flagą skanowania.
+**2026-07-28, Baofeng UV-82, kabel z układem CH340 (`/dev/cu.wchusbserial1410`), macOS.**
+Przeszedł pełny cykl: odczyt → zapis PMR446 → odczyt kontrolny → przywrócenie kopii → odczyt
+kontrolny. Obraz po przywróceniu zgadza się z kopią bajt w bajt.
 
-Dwie rzeczy ustalone przy tej okazji, obie już w kodzie:
+Zmierzone czasy: odczyt 6144 bajtów ~8 s, zapis ~13 s.
+
+Cztery rzeczy ustalone na sprzęcie, wszystkie już w kodzie:
+
 - **Radio nie odpowiada na powitanie wysłane natychmiast po otwarciu portu.** Potrzebna jest
-  krótka pauza, zanim pójdą bajty magiczne.
-- **DTR i RTS muszą być aktywne.** Przy każdej innej kombinacji radio milczy. Web Serial ustawia
-  je domyślnie, więc w przeglądarce działa to samo z siebie.
+  pauza, zanim pójdą bajty magiczne (`PORT_SETTLE_MS`).
+- **DTR i RTS muszą być aktywne jednocześnie.** Przy każdej innej kombinacji radio milczy.
+  Web Serial ustawia je domyślnie, więc w przeglądarce działa to samo z siebie.
+- **Radio, które dostanie nie swoją sekwencję powitalną, milknie na kilkanaście sekund.** Ani
+  czekanie, ani ponowne otwarcie portu po sekundzie go nie odblokowuje. Dlatego **model wybiera
+  użytkownik**, a nie zgadujemy go po kolei — wysyłamy jedną sekwencję i koniec.
+- **Po zapisie radio kończy sesję i nie odpowiada na odczyt od razu.** Weryfikacja wymaga
+  zamknięcia portu na ~4 s (`RECONNECT_PAUSE_MS`); przy sekundzie radio jeszcze milczy.
 
-Do powtórzenia tej próby poza przeglądarką służy `tools/radio_probe.py` — czysty Python, tylko
-odczyt, nic nie zapisuje.
+Narzędzia do powtórzenia prób poza przeglądarką, wszystkie na tym samym kodzie protokołu:
+
+```bash
+node --experimental-strip-types tools/hw-test.ts            # sam odczyt
+node --experimental-strip-types tools/hw-test.ts --write     # pełny cykl z zapisem
+node --experimental-strip-types tools/hw-restore.ts plik.img # przywrócenie kopii
+python3 tools/radio_probe.py                                 # próba bez Node, tylko odczyt
+```
 
 ## Obsługiwane radia
 

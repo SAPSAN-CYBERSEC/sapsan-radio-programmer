@@ -14,7 +14,9 @@ import {
   writeChannels,
   verifyChannels,
   looksLikeUv5rImage,
+  MODELS,
   RadioError,
+  type RadioFamily,
 } from '../radio/uv5r-protocol.ts';
 import { WebSerialTransport, isWebSerialSupported } from '../radio/web-serial.ts';
 import { localServiceSets, nationalServiceSets, placeNames } from '../data/services.ts';
@@ -36,6 +38,8 @@ let radioImage: Uint8Array | null = null;
 let backupDone = false;
 /** Trwa zapis do radia - przerwanie go zostawia radio z polowa kanalow. */
 let writing = false;
+/** Model wskazany przez uzytkownika - wysylamy jedna sekwencje powitalna zamiast zgadywac. */
+let family: RadioFamily = 'uv5r';
 const selected = new Set<string>();
 
 const tr = () => t(lang);
@@ -83,6 +87,7 @@ function applyTexts(): void {
     'btn-write': d.write,
     't-dont-unplug': d.dontUnplug,
     't-done-title': d.doneTitle,
+    't-model': d.model,
     't-restore-title': d.restoreTitle,
     't-restore-lead': d.restoreLead,
     'btn-restore': d.restoreDo,
@@ -205,7 +210,7 @@ async function connect(): Promise<void> {
   btn.textContent = tr().connecting;
   try {
     transport = await WebSerialTransport.request();
-    await identify(transport);
+    await identify(transport, family);
     radioImage = await readMainMemory(transport, setProgress);
     show('step-choose');
   } catch (err) {
@@ -290,7 +295,7 @@ async function verifyWritten(image: Uint8Array): Promise<string> {
   const d = tr();
   if (!transport) return d.verifySkipped;
   try {
-    const result = await verifyChannels(transport, image, setProgress);
+    const result = await verifyChannels(transport, image, setProgress, family);
     return result.ok ? d.verifyOk : d.verifyFail;
   } catch {
     return d.verifySkipped;
@@ -333,6 +338,12 @@ async function restoreFromFile(file: File): Promise<void> {
 }
 
 function init(): void {
+  const modelSel = $<HTMLSelectElement>('model');
+  modelSel.innerHTML = MODELS.map((m) => `<option value="${m.id}">${m.label}</option>`).join('');
+  modelSel.addEventListener('change', () => {
+    family = MODELS.find((m) => m.id === modelSel.value)?.family ?? 'uv5r';
+  });
+
   const langSel = $<HTMLSelectElement>('lang');
   langSel.innerHTML = LANGS.map((l) => `<option value="${l.code}">${l.label}</option>`).join('');
   langSel.value = lang;

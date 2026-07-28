@@ -26,6 +26,7 @@ interface Dict {
   placeNone: string;
   placeHint: string;
   showFreqs: (n: number) => string;
+  model: string;
 
   restoreTitle: string;
   restoreLead: string;
@@ -144,6 +145,7 @@ const en: Dict = {
   placeNone: '— pick a place —',
   placeHint: 'Polish emergency service channels depend on the place. Pick one to see them.',
   showFreqs: (n) => `Show all ${n} frequencies`,
+  model: 'Which radio is it?',
   restoreTitle: 'Restore from a backup',
   restoreLead: 'Have a backup file from an earlier session? Pick it and the radio goes back to how it was.',
   restoreDo: 'Restore to radio',
@@ -227,6 +229,7 @@ const pl: Dict = {
   placeNone: '— wybierz miejscowość —',
   placeHint: 'Kanały polskich służb zależą od miejscowości. Wybierz ją, żeby je zobaczyć.',
   showFreqs: (n) => `Pokaż wszystkie ${n} częstotliwości`,
+  model: 'Jakie to radio?',
   restoreTitle: 'Przywróć z kopii zapasowej',
   restoreLead: 'Masz plik kopii z wcześniejszego ustawiania? Wskaż go, a radio wróci do poprzedniego stanu.',
   restoreDo: 'Przywróć do radia',
@@ -310,6 +313,7 @@ const de: Dict = {
   placeNone: '— Ort wählen —',
   placeHint: 'Kanäle polnischer Dienste hängen vom Ort ab. Wähle einen, um sie zu sehen.',
   showFreqs: (n) => `Alle ${n} Frequenzen anzeigen`,
+  model: 'Welches Gerät ist es?',
   restoreTitle: 'Aus einer Sicherung wiederherstellen',
   restoreLead: 'Hast du eine Sicherungsdatei von früher? Wähle sie aus, dann kehrt das Gerät in den alten Zustand zurück.',
   restoreDo: 'Auf das Gerät zurückspielen',
@@ -393,6 +397,7 @@ const cs: Dict = {
   placeNone: '— vyber místo —',
   placeHint: 'Kanály polských složek závisí na místě. Vyber ho, aby se zobrazily.',
   showFreqs: (n) => `Zobrazit všech ${n} frekvencí`,
+  model: 'Jaká je to vysílačka?',
   restoreTitle: 'Obnovit ze zálohy',
   restoreLead: 'Máš soubor zálohy z dřívějška? Vyber ho a vysílačka se vrátí do původního stavu.',
   restoreDo: 'Obnovit do vysílačky',

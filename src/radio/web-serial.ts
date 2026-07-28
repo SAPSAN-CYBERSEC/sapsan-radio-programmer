@@ -22,6 +22,14 @@ const READ_TIMEOUT_MS = 1500;
  * stanu linii DTR i RTS - radio odpowiada tylko wtedy, gdy obie sa aktywne.
  */
 const PORT_SETTLE_MS = 500;
+/**
+ * Ile odczekac z zamknietym portem, zanim otworzymy go ponownie.
+ *
+ * Zmierzone na fizycznym UV-82 (2026-07-28): po zakonczonej sesji zapisu radio
+ * nie odpowiada od razu. Przy 1 s nadal milczy, przy 4 s wraca do rozmowy za
+ * kazdym razem - i na tym opiera sie odczyt weryfikujacy zapis.
+ */
+const RECONNECT_PAUSE_MS = 4000;
 
 export function isWebSerialSupported(): boolean {
   return typeof navigator !== 'undefined' && 'serial' in navigator;
@@ -115,11 +123,39 @@ export class WebSerialTransport implements Transport {
     this.buffer = new Uint8Array(0);
   }
 
-  async close(): Promise<void> {
+  /**
+   * Zamyka i otwiera port od nowa.
+   *
+   * Zgoda uzytkownika dotyczy portu, nie sesji, wiec ponowne otwarcie nie wywoluje
+   * kolejnego okienka wyboru. Radio, ktore dostalo nie swoja sekwencje powitalna,
+   * inaczej nie wraca do rozmowy.
+   */
+  async reconnect(): Promise<void> {
+    await this.releaseStreams();
+    await this.port.close();
+    await new Promise((r) => setTimeout(r, RECONNECT_PAUSE_MS));
+    await this.port.open({ baudRate: BAUD_RATE, dataBits: 8, stopBits: 1, parity: 'none' });
+    await new Promise((r) => setTimeout(r, PORT_SETTLE_MS));
+    this.reader = this.port.readable!.getReader();
+    this.writer = this.port.writable!.getWriter();
+    this.buffer = new Uint8Array(0);
+  }
+
+  private async releaseStreams(): Promise<void> {
     try {
       await this.reader?.cancel();
       this.reader?.releaseLock();
-      this.writer?.releaseLock();
+      await this.writer?.close();
+    } catch {
+      // Zamykamy polaczenie, ktore i tak zaraz otworzymy - blad tutaj nic nie zmienia.
+    }
+    this.reader = null;
+    this.writer = null;
+  }
+
+  async close(): Promise<void> {
+    try {
+      await this.releaseStreams();
       await this.port.close();
     } finally {
       this.reader = null;
