@@ -91,6 +91,7 @@ function applyTexts(): void {
     't-dont-unplug': d.dontUnplug,
     't-done-title': d.doneTitle,
     't-model': d.model,
+    't-help-title': d.helpTitle,
     't-sheet-title': d.sheetTitle,
     't-sheet-lead': d.sheetLead,
     'btn-add-row': d.addRow,
@@ -102,6 +103,20 @@ function applyTexts(): void {
     'btn-restart': d.again,
   };
   for (const [id, text] of Object.entries(map)) $(id).textContent = text;
+
+  // Pomoc sklada sie z akapitow, w ktorych **pogrubienie** niesie tresc - stad
+  // minimalna zamiana zamiast wciagania biblioteki do markdownu.
+  $('help-body').innerHTML = [
+    d.helpNoPort,
+    d.helpNoAnswer,
+    d.helpDrivers,
+    d.helpDriversWin,
+    d.helpDriversMac,
+    d.helpDriversLinux,
+    d.helpProlific,
+  ]
+    .map((p) => `<p>${p.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</p>`)
+    .join('');
 
   const countrySel = $<HTMLSelectElement>('country');
   countrySel.innerHTML = COUNTRIES.map(

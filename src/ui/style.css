@@ -515,3 +515,40 @@ button.small.ghost:hover {
   color: #fff;
   background: var(--akcent);
 }
+
+/* Pomoc przy problemach z polaczeniem - domyslnie zwinieta, zeby nie straszyc */
+.help {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--obwodka);
+  padding-top: 0.75rem;
+}
+
+.help summary {
+  font-weight: 600;
+  color: var(--akcent);
+  cursor: pointer;
+  list-style: none;
+}
+
+.help summary::-webkit-details-marker {
+  display: none;
+}
+
+.help summary::before {
+  content: '▸ ';
+}
+
+.help[open] summary::before {
+  content: '▾ ';
+}
+
+.help-body {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.help-body p {
+  margin: 0 0 0.8rem;
+  padding-left: 0.9rem;
+  border-left: 3px solid #eceff3;
+}

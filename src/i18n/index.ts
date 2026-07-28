@@ -27,6 +27,14 @@ interface Dict {
   placeHint: string;
   showFreqs: (n: number) => string;
   model: string;
+  helpTitle: string;
+  helpNoPort: string;
+  helpNoAnswer: string;
+  helpDrivers: string;
+  helpDriversMac: string;
+  helpDriversWin: string;
+  helpDriversLinux: string;
+  helpProlific: string;
 
   sheetTitle: string;
   sheetLead: string;
@@ -160,10 +168,18 @@ const en: Dict = {
     svc_rescue: { label: 'Mountain and water rescue', desc: 'GOPR, TOPR and WOPR channels.' },
   },
     place: 'Place',
-  placeNone: '— pick a place —',
+  placeNone: '- pick a place -',
   placeHint: 'Polish emergency service channels depend on the place. Pick one to see them.',
   showFreqs: (n) => `Show all ${n} frequencies`,
   model: 'Which radio is it?',
+  helpTitle: "The radio is not showing up. What now?",
+  helpNoPort: "**Nothing on the list when you click Connect.** The computer does not see the cable at all, so the browser cannot either. Try a different USB port, then check the driver below.",
+  helpNoAnswer: "**The port is there but the radio stays silent.** Push the plug in until it clicks - Baofeng sockets are stiff and a half-inserted plug looks connected. Then check that the radio is on, and that you picked the right model.",
+  helpDrivers: "**About drivers.** A web page can only use serial ports the operating system already exposes. If the system has no driver for your cable, no website can help - that part has to be installed once.",
+  helpDriversMac: "**macOS** has supported these cables since 10.14, so usually nothing is needed. If you once installed a driver from the chip maker, it takes over the device from the built-in one.",
+  helpDriversWin: "**Windows 10 and 11** are inconsistent here: sometimes a working driver arrives through Windows Update, sometimes a stale one, sometimes none. If the cable shows up with a warning icon in Device Manager, install the CH340 driver from the chip maker.",
+  helpDriversLinux: "**Linux** has had the driver in the kernel for years. Nothing to install.",
+  helpProlific: "**One case we cannot fix:** counterfeit Prolific PL2303 chips, common in cheap cables, are deliberately disabled by the vendor driver on Windows 11. A cable with a CH340 chip is the way around it.",
   sheetTitle: 'Check what goes into the radio',
   sheetLead: 'Edit anything you like, add your own channels or remove the ones you do not need.',
   colNum: 'No.',
@@ -261,10 +277,18 @@ const pl: Dict = {
     svc_rescue: { label: 'Ratownictwo górskie i wodne', desc: 'Kanały GOPR, TOPR i WOPR.' },
   },
     place: 'Miejscowość',
-  placeNone: '— wybierz miejscowość —',
+  placeNone: '- wybierz miejscowość -',
   placeHint: 'Kanały polskich służb zależą od miejscowości. Wybierz ją, żeby je zobaczyć.',
   showFreqs: (n) => `Pokaż wszystkie ${n} częstotliwości`,
   model: 'Jakie to radio?',
+  helpTitle: "Radio się nie pokazuje. Co teraz?",
+  helpNoPort: "**Po kliknięciu Połącz lista jest pusta.** Komputer w ogóle nie widzi kabla, więc przeglądarka też nie może. Spróbuj innego gniazda USB, potem sprawdź sterownik niżej.",
+  helpNoAnswer: "**Port jest, ale radio milczy.** Dociśnij wtyk, aż wskoczy - gniazda w Baofengu są twarde, a wtyk wsunięty do połowy wygląda jak podłączony. Potem sprawdź, czy radio jest włączone i czy wybrany model się zgadza.",
+  helpDrivers: "**O sterownikach.** Strona internetowa może korzystać tylko z portów, które system już udostępnia. Jeśli system nie ma sterownika do Twojego kabla, żadna strona tego nie obejdzie - to trzeba zainstalować raz.",
+  helpDriversMac: "**macOS** obsługuje te kable od wersji 10.14, więc zwykle nic nie trzeba robić. Jeśli kiedyś instalowałeś sterownik producenta układu, przejmuje on urządzenie od wbudowanego.",
+  helpDriversWin: "**Windows 10 i 11** bywają tu nieprzewidywalne: czasem przez Windows Update przychodzi działający sterownik, czasem przestarzały, czasem żaden. Jeśli kabel widnieje w Menedżerze urządzeń z wykrzyknikiem, zainstaluj sterownik CH340 od producenta układu.",
+  helpDriversLinux: "**Linux** ma ten sterownik w jądrze od lat. Nic nie trzeba instalować.",
+  helpProlific: "**Jednego przypadku nie naprawimy:** podrabiane układy Prolific PL2303, częste w tanich kablach, są celowo wyłączane przez sterownik producenta na Windows 11. Wyjściem jest kabel z układem CH340.",
   sheetTitle: 'Sprawdź, co pójdzie do radia',
   sheetLead: 'Zmień co chcesz, dopisz własne kanały albo usuń te, których nie potrzebujesz.',
   colNum: 'Nr',
@@ -362,10 +386,18 @@ const de: Dict = {
     svc_rescue: { label: 'Berg- und Wasserrettung', desc: 'Kanäle von GOPR, TOPR und WOPR.' },
   },
     place: 'Ort',
-  placeNone: '— Ort wählen —',
+  placeNone: '- Ort wählen -',
   placeHint: 'Kanäle polnischer Dienste hängen vom Ort ab. Wähle einen, um sie zu sehen.',
   showFreqs: (n) => `Alle ${n} Frequenzen anzeigen`,
   model: 'Welches Gerät ist es?',
+  helpTitle: "Das Gerät taucht nicht auf. Was nun?",
+  helpNoPort: "**Nach Klick auf Verbinden ist die Liste leer.** Der Rechner sieht das Kabel gar nicht, also kann es der Browser auch nicht. Probiere einen anderen USB-Anschluss und prüfe dann den Treiber unten.",
+  helpNoAnswer: "**Der Port ist da, aber das Gerät schweigt.** Drücke den Stecker hinein, bis er einrastet - die Buchsen sind stramm und ein halb steckender Stecker sieht verbunden aus. Prüfe dann, ob das Gerät an ist und das gewählte Modell stimmt.",
+  helpDrivers: "**Zu den Treibern.** Eine Webseite kann nur Ports nutzen, die das Betriebssystem bereits bereitstellt. Fehlt dem System der Treiber, hilft keine Webseite - das muss einmal installiert werden.",
+  helpDriversMac: "**macOS** unterstützt diese Kabel seit 10.14, meist ist nichts nötig. Ein einmal installierter Herstellertreiber übernimmt das Gerät vom eingebauten.",
+  helpDriversWin: "**Windows 10 und 11** sind hier unbeständig: mal kommt über Windows Update ein funktionierender Treiber, mal ein veralteter, mal keiner. Erscheint das Kabel im Geräte-Manager mit Warnzeichen, installiere den CH340-Treiber des Chipherstellers.",
+  helpDriversLinux: "**Linux** hat den Treiber seit Jahren im Kernel. Nichts zu tun.",
+  helpProlific: "**Ein Fall, den wir nicht lösen können:** gefälschte Prolific-PL2303-Chips, häufig in billigen Kabeln, werden vom Herstellertreiber unter Windows 11 absichtlich deaktiviert. Ein Kabel mit CH340 umgeht das.",
   sheetTitle: 'Prüfe, was ins Gerät kommt',
   sheetLead: 'Ändere was du willst, füge eigene Kanäle hinzu oder entferne überflüssige.',
   colNum: 'Nr.',
@@ -463,10 +495,18 @@ const cs: Dict = {
     svc_rescue: { label: 'Horská a vodní záchrana', desc: 'Kanály GOPR, TOPR a WOPR.' },
   },
     place: 'Místo',
-  placeNone: '— vyber místo —',
+  placeNone: '- vyber místo -',
   placeHint: 'Kanály polských složek závisí na místě. Vyber ho, aby se zobrazily.',
   showFreqs: (n) => `Zobrazit všech ${n} frekvencí`,
   model: 'Jaká je to vysílačka?',
+  helpTitle: "Vysílačka se neobjevuje. Co teď?",
+  helpNoPort: "**Po kliknutí na Připojit je seznam prázdný.** Počítač kabel vůbec nevidí, takže ho nevidí ani prohlížeč. Zkus jiný USB port a pak zkontroluj ovladač níže.",
+  helpNoAnswer: "**Port je, ale vysílačka mlčí.** Zatlač konektor, dokud nezacvakne - konektory jsou tuhé a napůl zasunutý vypadá jako připojený. Pak zkontroluj, jestli je vysílačka zapnutá a jestli sedí vybraný model.",
+  helpDrivers: "**K ovladačům.** Webová stránka může využívat jen porty, které systém už nabízí. Pokud systém ovladač nemá, žádná stránka to neobejde - musí se jednou nainstalovat.",
+  helpDriversMac: "**macOS** tyto kabely podporuje od 10.14, obvykle není potřeba nic dělat. Jednou nainstalovaný ovladač výrobce převezme zařízení od vestavěného.",
+  helpDriversWin: "**Windows 10 a 11** jsou tu nevyzpytatelné: někdy přes Windows Update dorazí funkční ovladač, jindy zastaralý, jindy žádný. Pokud se kabel ve Správci zařízení objeví s vykřičníkem, nainstaluj ovladač CH340 od výrobce čipu.",
+  helpDriversLinux: "**Linux** má ovladač v jádře už roky. Není co instalovat.",
+  helpProlific: "**Jeden případ nevyřešíme:** padělané čipy Prolific PL2303, běžné v levných kabelech, ovladač výrobce na Windows 11 záměrně vypíná. Řešením je kabel s čipem CH340.",
   sheetTitle: 'Zkontroluj, co půjde do vysílačky',
   sheetLead: 'Uprav co chceš, přidej vlastní kanály nebo odeber ty, které nepotřebuješ.',
   colNum: 'Č.',

@@ -1,181 +1,196 @@
-# Programator krótkofalówek Baofeng
+# Radio Programmer
 
-Ustawianie kanałów w radiu Baofeng prosto z przeglądarki. Bez instalowania Pythona, bez CHIRP-a,
-bez płyty CD z 2011 roku.
+Set up channels in a Baofeng handheld from your browser. No Python, no CHIRP install, no driver CD
+from 2011.
 
-**Stan: wczesna wersja robocza. Nie testowana jeszcze na fizycznym radiu.**
+> **Status: early. Works on real hardware, tested on a Baofeng UV-82. Not yet tested on Windows.**
 
-## Po co to
+## Why this exists
 
-CHIRP jest znakomity i obsługuje setkę modeli, ale wymaga instalacji i wygląda jak arkusz
-kalkulacyjny. Ktoś, kto właśnie kupił pierwszą krótkofalówkę, nie chce edytora pamięci — chce, żeby
-radio po prostu miało w środku kanały, których będzie słuchał.
+[CHIRP](https://chirpmyradio.com) is excellent and supports about a hundred radios. It is also a
+desktop app that wants a Python runtime, and it presents you with a spreadsheet. Someone who just
+unboxed their first handheld does not want a memory editor - they want the radio to have channels
+in it.
 
-Cztery ekrany: podłącz radio, wybierz zestawy kanałów, **sprawdź i popraw arkusz**, zapisz.
+So: pick your country, tick the sets you want, adjust the list if you feel like it, write.
 
-Arkusz jest po to, żeby narzędzie było użyteczne, a nie tylko wygodne: wybrane zestawy są punktem
-wyjścia, nie ostatnim słowem. Można dopisać własną częstotliwość, zmienić nazwę, ustawić ton CTCSS
-dla przemiennika, wyrzucić niepotrzebne kanały albo wyczyścić wszystko i zbudować listę od zera.
+## How it works
 
-Częstotliwość spoza pasma radia dostaje ostrzeżenie, ale **nie blokuje zapisu** — to decyzja
-użytkownika, nie nasza.
+Web Serial API. The browser opens the port at 9600 8N1, sends the handshake, reads the radio's
+memory in 64-byte blocks, we swap the channel area and write it back in 16-byte blocks.
 
-## Jak to działa
+**No backend.** Everything runs locally. Your radio's contents never leave the machine.
 
-Web Serial API. Przeglądarka otwiera port szeregowy (9600 8N1), wysyła sekwencję powitalną, czyta
-pamięć radia blokami po 64 bajty, my podmieniamy obszar kanałów i zapisujemy blokami po 16 bajtów.
+### Requirements
 
-**Zero backendu.** Wszystko liczy się lokalnie, ustawienia radia nigdzie nie wychodzą.
+- A Chromium-based browser: Chrome, Edge, Opera, Brave. Firefox and Safari do not implement Web Serial.
+- A Kenwood-plug programming cable.
+- **A working driver for the cable's USB chip.** Web Serial can only see ports the operating system
+  already exposes - that is not something a web page can work around. See [Drivers](#drivers).
 
-### Wymagania
+## Supported radios
 
-- Przeglądarka na silniku Chromium: Chrome, Edge, Opera, Brave. Firefox i Safari nie obsługują Web Serial.
-- Kabel programujący do gniazda Kenwood (dwa wtyki jack).
-- **Sterownik przejściówki USB zainstalowany w systemie.** Web Serial widzi tylko porty, które
-  system już wystawił — tego nie da się obejść. CH340 działa na Windows 10/11 i macOS bez zabaw.
-  Podrabiane układy Prolific PL2303 są blokowane przez Windows 11 i tego nie naprawimy.
+One protocol family covers:
 
-## Sprawdzone na sprzęcie
+`UV-5R` · `UV-5RA` · `UV-5RB` · `UV-5RC` · `UV-82` · `UV-82HP` · `BF-F8` · `GT-3` · `UV-6R` · `P15UV` · `BF-A58`
 
-**2026-07-28, Baofeng UV-82, kabel z układem CH340 (`/dev/cu.wchusbserial1410`), macOS.**
-Przeszedł pełny cykl: odczyt → zapis PMR446 → odczyt kontrolny → przywrócenie kopii → odczyt
-kontrolny. Obraz po przywróceniu zgadza się z kopią bajt w bajt.
+You pick the model from a list rather than having the tool guess. That is deliberate - see
+[What the hardware taught us](#what-the-hardware-taught-us).
 
-Zmierzone czasy: odczyt 6144 bajtów ~8 s, zapis ~13 s.
+## Countries and languages
 
-Cztery rzeczy ustalone na sprzęcie, wszystkie już w kodzie:
+The interface starts in **English**; Polish, German and Czech are one click away.
 
-- **Radio nie odpowiada na powitanie wysłane natychmiast po otwarciu portu.** Potrzebna jest
-  pauza, zanim pójdą bajty magiczne (`PORT_SETTLE_MS`).
-- **DTR i RTS muszą być aktywne jednocześnie.** Przy każdej innej kombinacji radio milczy.
-  Web Serial ustawia je domyślnie, więc w przeglądarce działa to samo z siebie.
-- **Radio, które dostanie nie swoją sekwencję powitalną, milknie na kilkanaście sekund.** Ani
-  czekanie, ani ponowne otwarcie portu po sekundzie go nie odblokowuje. Dlatego **model wybiera
-  użytkownik**, a nie zgadujemy go po kolei — wysyłamy jedną sekwencję i koniec.
-- **Po zapisie radio kończy sesję i nie odpowiada na odczyt od razu.** Weryfikacja wymaga
-  zamknięcia portu na ~4 s (`RECONNECT_PAUSE_MS`); przy sekundzie radio jeszcze milczy.
+Frequency sets are filtered by country so the list stays useful:
 
-Narzędzia do powtórzenia prób poza przeglądarką, wszystkie na tym samym kodzie protokołu:
-
-```bash
-node --experimental-strip-types tools/hw-test.ts            # sam odczyt
-node --experimental-strip-types tools/hw-test.ts --write     # pełny cykl z zapisem
-node --experimental-strip-types tools/hw-restore.ts plik.img # przywrócenie kopii
-python3 tools/radio_probe.py                                 # próba bez Node, tylko odczyt
-```
-
-## Obsługiwane radia
-
-Faza 1 to jedna rodzina protokołu, która pokrywa:
-
-`UV-5R` · `UV-5RA` · `UV-5RB` · `UV-5RC` · `UV-82` · `BF-F8` · `GT-3` · `UV-6R` · `P15UV`
-
-Rozpoznanie modelu następuje po sekwencji powitalnej — jeśli radio nie odpowie żadną ze znanych,
-program się zatrzyma zamiast zgadywać.
-
-## Kraje i języki
-
-Interfejs startuje **po angielsku**, do wyboru są też polski, niemiecki i czeski.
-
-Zestawy częstotliwości filtrują się po wybranym kraju, żeby lista nie była śmietnikiem:
-
-| Kraj | Zestawy |
+| Country | Sets |
 |---|---|
-| 🇺🇸 USA | FRS/GMRS (22), MURS (5), 2 m i 70 cm wg ARRL |
-| 🇵🇱 Polska | PMR446, LPD433, PMR-154, 2 m i 70 cm wg IARU R1, **służby** |
-| 🇩🇪 Niemcy | PMR446, LPD433, Freenet (6), 2 m i 70 cm wg IARU R1 |
-| 🇨🇿 Czechy | PMR446, LPD433, 2 m i 70 cm wg IARU R1 |
+| 🇺🇸 United States | FRS/GMRS (22), MURS (5), 2 m and 70 cm per ARRL |
+| 🇵🇱 Poland | PMR446, LPD433, PMR-154, IARU R1 bands, **emergency services** |
+| 🇩🇪 Germany | PMR446, LPD433, Freenet (6), IARU R1 bands |
+| 🇨🇿 Czechia | PMR446, LPD433, IARU R1 bands |
 
-### Polskie służby
+### Polish emergency services
 
-Po wybraniu Polski pojawia się trzeci selektor — **miejscowość**. Kanały policji, straży pożarnej,
-pogotowia i straży miejskiej są przypisane do konkretnych miast, więc bez wskazania miejsca lista
-byłaby bezużyteczna.
+Picking Poland reveals a third selector: **place**. Police, fire, ambulance and municipal guard
+channels are assigned to specific towns, so without one the list would be meaningless. The data
+covers **416 towns and provinces**, plus nationwide sets: numbered fire service channels (53),
+marine VHF (90), railway (37), border guard (41), crisis management (56), state forests (13) and
+mountain/water rescue (30).
 
-Dane obejmują **416 miejscowości i województw**. Niezależnie od miejsca dostępne są zestawy
-ogólnokrajowe: numerowane kanały straży pożarnej (53), pasmo morskie VHF (90), PKP (37), straż
-graniczna (41), sieć zarządzania kryzysowego (56), Lasy Państwowe (13), ratownictwo górskie i
-wodne (30).
+The data is extracted by `tools/parse_sluzby.py` and `tools/build_sluzby.py`, never retyped by
+hand. The source has two traps that the scripts work around: a `num=` attribute in the HTML that
+does **not** match the displayed value (leftover from an Excel export), and header rows carrying
+band edges that look exactly like channels.
 
-Dane nie są przepisywane ręcznie — wyciąga je `tools/parse_sluzby.py` i `tools/build_sluzby.py`
-do `src/data/services-pl.json`. Skrypty obchodzą dwie pułapki źródła: atrybut `num=` w HTML nie
-odpowiada wyświetlanej wartości (śmieć po eksporcie z Excela), a wiersze nagłówkowe zawierają
-granice pasm udające kanały.
+## The channel sheet
 
-Nie weszły strony `Inne miasta Polski` i `PSP BF171` — mają sklejone komórki, z których nie da się
-odtworzyć, która częstotliwość należy do którego miasta. Zgadywanie tutaj daje radio, które milczy.
+Chosen sets are a starting point, not the final word. Before writing you get an editable list: add
+your own frequency, rename anything, set a CTCSS tone for a repeater, drop channels you do not
+need, or clear it and build from scratch.
 
-## Bezpieczeństwo
+The frequency field accepts both `145.500` and `145,500`. Names are trimmed to 7 characters and
+upper-cased as you type, because that is what the radio's display will show. A frequency outside
+the radio's bands is flagged - **but does not block the write**. That call is yours, not ours.
 
-**Kopia zapasowa jest obowiązkowa.** Przycisk zapisu jest nieaktywny, dopóki nie zostanie pobrany
-plik z aktualną zawartością pamięci radia.
+## Safety
 
-**Przywracanie działa w obie strony.** Sekcja „przywróć z kopii" jest widoczna od chwili
-połączenia, nie na końcu kreatora — kto po nią sięga, zwykle już ma problem. Plik jest sprawdzany
-przed wysłaniem: zły rozmiar albo zawartość niepasująca do formatu UV-5R zatrzymuje operację.
+**The backup is mandatory.** The write button stays disabled until you have downloaded a copy of
+what is currently in the radio.
 
-**Zapis jest weryfikowany odczytem.** Radio potwierdza każdy blok bajtem ACK, ale to znaczy tylko
-„odebrałem", nie „zapisałem poprawnie". Po zapisie czytamy zapisane obszary i porównujemy bajt po
-bajcie. Nieudany odczyt jest komunikowany inaczej niż niezgodność — to dwie różne sytuacje.
+**Restore works too.** The restore panel is visible from the moment you connect, not buried at the
+end of the wizard - whoever reaches for it usually already has a problem. Files are validated
+before being sent: wrong size, or contents that do not match the UV-5R layout, stops the operation.
 
-**Zamknięcie karty w trakcie zapisu jest blokowane** ostrzeżeniem przeglądarki.
+**Only the channel area is written**, not the whole memory. Radio settings stay untouched, and the
+auxiliary region from `0x1EC0` (band limits, power-on message) is never even read.
 
-**Zapisujemy tylko obszar kanałów i nazw**, nie całą pamięć. Ustawienia radia zostają nietknięte,
-a obszar pomocniczy od 0x1EC0 (limity pasm, komunikat powitalny) nie jest nawet czytany.
+**Writes are verified by reading back.** The radio acknowledges every block, but an ACK means
+"received", not "stored correctly". A failed read-back is reported differently from a mismatch -
+those are two different situations.
 
-Program nie ogranicza tego, co można wpisać do radia. Jedna informacja o zgodności z lokalnymi
-przepisami stoi na stronie głównej — reszta to decyzja użytkownika.
+Closing the tab mid-write triggers a browser warning.
 
-## Pułapka przy pisaniu kodu
+## What the hardware taught us
 
-Testy chodzą na `node --experimental-strip-types`, który **nie parsuje skróconych właściwości
-konstruktora** (`constructor(private readonly x: T) {}`). Napotkanie takiego zapisu wywala cały plik
-testowy z `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`, i to zanim wykona się choć jeden test. Pola
-deklarujemy jawnie.
+Measured on a physical Baofeng UV-82 over a CH340 cable, 2026-07-28. Full cycle passed: read →
+write PMR446 → read back → restore backup → read back. The restored image matched the backup byte
+for byte. Reading 6144 bytes takes ~8 s, writing ~13 s.
 
-## Uruchomienie
+Four findings, all now in the code:
+
+- **The radio ignores a handshake sent immediately after the port opens.** It needs a moment to
+  settle first (`PORT_SETTLE_MS`).
+- **DTR and RTS must both be asserted.** Any other combination and the radio stays silent. Web
+  Serial asserts them by default, so browsers get this for free.
+- **A radio that receives the wrong handshake goes quiet for a good fifteen seconds.** Neither
+  waiting nor reopening the port after a second brings it back, while sending only the correct
+  sequence works every time. That is why **the user picks the model** instead of us probing a list
+  - probing turned out to be both slower and unreliable.
+- **After a write the radio ends the session and will not answer a read straight away.**
+  Verification needs the port closed for ~4 s (`RECONNECT_PAUSE_MS`); one second is not enough.
+
+## Drivers
+
+This is the part no web page can fix, so here it is plainly.
+
+| System | CH340 | Notes |
+|---|---|---|
+| **Linux** | in-kernel (`ch341`) for many years | works out of the box |
+| **macOS** | built in since 10.14 | a manufacturer driver, once installed, claims the device and takes over from the built-in one |
+| **Windows 10/11** | inconsistent | sometimes a stale driver is pulled in, sometimes none at all |
+| **Prolific PL2303 (counterfeit)** | deliberately blocked by the vendor | not fixable from our side |
+
+WebUSB would let a page bypass the OS driver, but it does not support CH340 or CP2102 - the very
+chips these cables use. So "no drivers needed" would be a half-truth, and we do not print it.
+
+## Running it
 
 ```bash
 npm install
-npm run dev      # serwer deweloperski
-npm test         # testy kodowania pamięci
-npm run build    # wersja produkcyjna
+npm run dev      # dev server
+npm test         # 32 tests, no hardware needed
+npm run build    # production build
 ```
 
-## Struktura
+## Hardware tools
 
-```
-src/radio/uv5r-memory.ts    mapa pamięci, kodowanie kanałów i nazw
-src/radio/uv5r-protocol.ts  protokół szeregowy: powitanie, odczyt, zapis
-src/radio/web-serial.ts     transport Web Serial
-src/data/bands.ts           zestawy częstotliwości pogrupowane po krajach
-src/data/build-channels.ts  składanie wybranych zestawów w listę kanałów
-src/data/services.ts        polskie służby, zestawy lokalne i krajowe
-src/data/services-pl.json   dane wygenerowane przez tools/ (nie edytować ręcznie)
-src/i18n/                   tłumaczenia EN / PL / DE / CS
-tools/                      skrypty wyciągające dane ze źródła
-src/ui/sheet.ts             arkusz kanałów: edycja, walidacja wpisów
-src/ui/                     kreator, cztery ekrany
+Same protocol code as the browser, different transport - useful for debugging without a UI:
+
+```bash
+node --experimental-strip-types tools/hw-test.ts             # read only
+node --experimental-strip-types tools/hw-test.ts --write      # full cycle incl. write
+node --experimental-strip-types tools/hw-restore.ts file.img  # restore a backup
+python3 tools/radio_probe.py                                  # no-Node probe, read only
 ```
 
-## Czego tu nie ma
+`hw-test.ts` refuses to overwrite an existing backup file: on a second run the radio already holds
+the test channels, and saving those as "the backup" would destroy the only way back.
 
-Ustawień radia (squelch, VOX, podświetlenie, timeout i kilkadziesiąt innych pól — tam CHIRP ma
-piętnaście lat przewagi), wgrywania firmware'u, obsługi DMR, kont użytkownika.
+## Layout
 
-Brakuje **przemienników amatorskich per miasto** oraz służb w Niemczech, Czechach i USA — te dane
-wejdą, gdy znajdzie się dla nich źródło tej samej jakości co polskie.
+```
+src/radio/uv5r-memory.ts    memory map, channel and name encoding
+src/radio/uv5r-protocol.ts  serial protocol: handshake, read, write, verify
+src/radio/web-serial.ts     Web Serial transport
+src/data/bands.ts           frequency sets grouped by country
+src/data/services.ts        Polish emergency services, local and national
+src/data/services-pl.json   generated by tools/ - do not edit by hand
+src/ui/sheet.ts             channel sheet: editing and input validation
+src/ui/                     the wizard, four screens
+test/fake-radio.ts          a fake radio - full cycle without plugging anything in
+tools/                      data extraction and hardware scripts
+```
 
-## Źródła danych
+### A note for contributors
 
-PMR446, LPD433, PMR-154 oraz wszystkie polskie służby — [`czestotliwosci.pl.tl`](https://czestotliwosci.pl.tl).
-Freenet — BNetzA. FRS/GMRS i MURS — FCC via RadioReference. Pasma amatorskie — bandplan
-IARU Region 1 (Europa) i ARRL (USA).
+Tests run under `node --experimental-strip-types`, which does **not** parse TypeScript parameter
+properties (`constructor(private readonly x: T) {}`). One of those anywhere in the import graph
+kills the whole test file with `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX` before a single test runs.
+Declare fields explicitly.
 
-## Podziękowania i licencja
+## Not in scope
 
-Format pamięci i protokół szeregowy ustalone na podstawie sterownika
-[CHIRP](https://chirpmyradio.com) `chirp/drivers/uv5r.py` — bez tej pracy ten projekt nie mógłby
-powstać.
+Radio settings (squelch, VOX, backlight, timeout and several dozen other fields - CHIRP has fifteen
+years and a community that tested those across a hundred models), firmware flashing, DMR, user
+accounts.
 
-Kod na licencji **GPL-3.0**, tak jak CHIRP.
+Also missing: amateur repeaters per city, and emergency services outside Poland. Those need a data
+source of the same quality as the Polish one.
+
+## Data sources
+
+PMR446, LPD433, PMR-154 and all Polish services - [czestotliwosci.pl.tl](https://czestotliwosci.pl.tl).
+Freenet - BNetzA. FRS/GMRS and MURS - FCC via RadioReference. Amateur bands - IARU Region 1 and
+ARRL band plans.
+
+## Credits and licence
+
+The memory layout and serial protocol were worked out from CHIRP's `chirp/drivers/uv5r.py`. Without
+that work this project could not exist.
+
+Licensed **GPL-3.0**, same as CHIRP.
+
+---
+
+Built by [SAPSAN](https://sapsan-sklep.pl), a Polish shop selling the radios this programs.
