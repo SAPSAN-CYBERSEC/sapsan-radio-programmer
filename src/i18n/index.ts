@@ -25,6 +25,7 @@ interface Dict {
   place: string;
   placeNone: string;
   placeHint: string;
+  showFreqs: (n: number) => string;
 
   step1: string;
   connectHint1: string;
@@ -130,6 +131,7 @@ const en: Dict = {
     place: 'Place',
   placeNone: '— pick a place —',
   placeHint: 'Polish emergency service channels depend on the place. Pick one to see them.',
+  showFreqs: (n) => `Show all ${n} frequencies`,
   countries: { US: 'United States', PL: 'Poland', DE: 'Germany', CZ: 'Czechia' },
 };
 
@@ -201,6 +203,7 @@ const pl: Dict = {
     place: 'Miejscowość',
   placeNone: '— wybierz miejscowość —',
   placeHint: 'Kanały polskich służb zależą od miejscowości. Wybierz ją, żeby je zobaczyć.',
+  showFreqs: (n) => `Pokaż wszystkie ${n} częstotliwości`,
   countries: { US: 'Stany Zjednoczone', PL: 'Polska', DE: 'Niemcy', CZ: 'Czechy' },
 };
 
@@ -272,6 +275,7 @@ const de: Dict = {
     place: 'Ort',
   placeNone: '— Ort wählen —',
   placeHint: 'Kanäle polnischer Dienste hängen vom Ort ab. Wähle einen, um sie zu sehen.',
+  showFreqs: (n) => `Alle ${n} Frequenzen anzeigen`,
   countries: { US: 'Vereinigte Staaten', PL: 'Polen', DE: 'Deutschland', CZ: 'Tschechien' },
 };
 
@@ -343,6 +347,7 @@ const cs: Dict = {
     place: 'Místo',
   placeNone: '— vyber místo —',
   placeHint: 'Kanály polských složek závisí na místě. Vyber ho, aby se zobrazily.',
+  showFreqs: (n) => `Zobrazit všech ${n} frekvencí`,
   countries: { US: 'Spojené státy', PL: 'Polsko', DE: 'Německo', CZ: 'Česko' },
 };
 
@@ -354,6 +359,19 @@ const DICTS: Record<Lang, Dict> = { en, pl, de, cs };
  * kto chce inny jezyk, przelaczy go jednym kliknieciem.
  */
 export const DEFAULT_LANG: Lang = 'en';
+
+/**
+ * Czestotliwosc w formacie czytelnym dla danego jezyka.
+ * Angielski uzywa kropki, pozostale trzy przecinka - w radiu i tak jest kropka,
+ * ale na ekranie liczba ma wygladac tak, jak uzytkownik ja zapisuje.
+ */
+export function formatFreq(hz: number, lang: Lang): string {
+  // Piec miejsc, bo raster 6,25 kHz tego wymaga: PMR446 kanal 1 to 446,00625 MHz
+  // i zaokraglenie do czterech pokazaloby uzytkownikowi inna wartosc, niz trafia do radia.
+  // Koncowe zera obcinamy, ale nigdy ponizej trzech miejsc - tak zapisuja to krotkofalowcy.
+  const mhz = (hz / 1_000_000).toFixed(5).replace(/(\.\d{3}\d*?)0+$/, '$1');
+  return `${lang === 'en' ? mhz : mhz.replace('.', ',')} MHz`;
+}
 
 export function t(lang: Lang): Dict {
   return DICTS[lang];

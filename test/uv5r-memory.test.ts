@@ -31,6 +31,7 @@ import {
 } from '../src/data/bands.ts';
 import { buildChannels } from '../src/data/build-channels.ts';
 import { localServiceSets, nationalServiceSets, placeNames } from '../src/data/services.ts';
+import { formatFreq } from '../src/i18n/index.ts';
 
 const base: Channel = {
   rxFreq: 145_500_000,
@@ -230,4 +231,20 @@ test('polskie sluzby: lista miejscowosci zaczyna sie od wojewodztw', () => {
   // Wojewodztwa pisane wersalikami maja byc na gorze listy, przed miastami.
   assert.equal(names[0], names[0]!.toUpperCase());
   assert.ok(names.indexOf('DOLNOŚLĄSKIE') < names.indexOf('Wrocław'));
+});
+
+test('czestotliwosc wyswietla sie dokladnie tak, jak trafia do radia', () => {
+  // Trzy miejsca to standard zapisu (145.500), wiecej tylko gdy cos znacza.
+  assert.equal(formatFreq(145_500_000, 'en'), '145.500 MHz');
+  assert.equal(formatFreq(172_150_000, 'en'), '172.150 MHz');
+  assert.equal(formatFreq(145_587_500, 'en'), '145.5875 MHz');
+
+  // Raster 6,25 kHz wymaga pieciu miejsc. Zaokraglenie pokazaloby 446,0063,
+  // czyli inna czestotliwosc niz ta, ktora program wpisuje do pamieci.
+  assert.equal(formatFreq(446_006_250, 'en'), '446.00625 MHz');
+  assert.equal(formatFreq(446_193_750, 'en'), '446.19375 MHz');
+
+  // Poza angielskim separatorem dziesietnym jest przecinek.
+  assert.equal(formatFreq(145_500_000, 'pl'), '145,500 MHz');
+  assert.equal(formatFreq(446_006_250, 'de'), '446,00625 MHz');
 });

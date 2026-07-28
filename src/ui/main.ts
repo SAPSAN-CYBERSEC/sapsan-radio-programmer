@@ -11,7 +11,7 @@ import { writeChannelsIntoImage, CHANNEL_COUNT } from '../radio/uv5r-memory.ts';
 import { identify, readMainMemory, writeChannels, RadioError } from '../radio/uv5r-protocol.ts';
 import { WebSerialTransport, isWebSerialSupported } from '../radio/web-serial.ts';
 import { localServiceSets, nationalServiceSets, placeNames } from '../data/services.ts';
-import { t, DEFAULT_LANG, LANGS, type Lang } from '../i18n/index.ts';
+import { t, DEFAULT_LANG, LANGS, formatFreq, type Lang } from '../i18n/index.ts';
 
 const $ = <T extends HTMLElement>(id: string): T => {
   const el = document.getElementById(id);
@@ -106,22 +106,40 @@ function renderSets(): void {
   box.innerHTML = '';
   for (const set of available) {
     const text = d.sets[set.i18nKey];
-    const label = document.createElement('label');
-    label.className = 'set';
-    label.innerHTML = `
-      <input type="checkbox" value="${set.id}" ${selected.has(set.id) ? 'checked' : ''} />
-      <span>
-        <span class="set-label">${text?.label ?? set.id}</span>
-        <p class="set-desc">${text?.desc ?? ''}</p>
-        <span class="count">${set.channels.length}</span>
-      </span>`;
-    const input = label.querySelector('input')!;
+    const card = document.createElement('div');
+    card.className = 'set';
+
+    // Czesc klikalna i szczegoly sa rozdzielone celowo: gdyby lista siedziala
+    // w <label>, rozwiniecie jej przelaczaloby zaznaczenie zestawu.
+    const rows = set.channels
+      .map(
+        (c) =>
+          `<li><span class="freq-name">${c.name}</span>` +
+          `<span class="freq-value">${formatFreq(c.rx, lang)}</span></li>`,
+      )
+      .join('');
+
+    card.innerHTML = `
+      <label class="set-main">
+        <input type="checkbox" value="${set.id}" ${selected.has(set.id) ? 'checked' : ''} />
+        <span>
+          <span class="set-label">${text?.label ?? set.id}</span>
+          <p class="set-desc">${text?.desc ?? ''}</p>
+          <span class="count">${set.channels.length}</span>
+        </span>
+      </label>
+      <details class="set-details">
+        <summary>${d.showFreqs(set.channels.length)}</summary>
+        <ul class="freq-list">${rows}</ul>
+      </details>`;
+
+    const input = card.querySelector('input')!;
     input.addEventListener('change', () => {
       if (input.checked) selected.add(set.id);
       else selected.delete(set.id);
       updateCounter();
     });
-    box.appendChild(label);
+    box.appendChild(card);
   }
 
   // W Polsce kanaly sluzb zaleza od miejscowosci - bez jej wyboru lista jest niepelna.

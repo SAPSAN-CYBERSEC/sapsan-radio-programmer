@@ -20,6 +20,15 @@
   box-sizing: border-box;
 }
 
+/*
+ * Atrybut hidden musi wygrywac z kazda nasza regula display. Bez tego wystarczy
+ * gdziekolwiek napisac `display: flex` na elemencie i chowanie go z JS przestaje
+ * dzialac po cichu - trafilo sie juz dwa razy w tym projekcie.
+ */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   padding: 0 1rem 3rem;
@@ -146,13 +155,9 @@ button.big.danger:disabled {
 }
 
 .set {
-  display: flex;
-  gap: 0.9rem;
-  align-items: flex-start;
-  padding: 1rem;
   border: 2px solid var(--obwodka);
   border-radius: 10px;
-  cursor: pointer;
+  overflow: hidden;
 }
 
 .set:has(input:checked) {
@@ -160,7 +165,15 @@ button.big.danger:disabled {
   background: #eef5fc;
 }
 
-.set input {
+.set-main {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  padding: 1rem;
+  cursor: pointer;
+}
+
+.set-main input {
   width: 1.5rem;
   height: 1.5rem;
   margin-top: 0.2rem;
@@ -290,4 +303,57 @@ button.big.danger:disabled {
   color: #4a545f;
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+/* Rozwijane szczegoly: co dokladnie wjedzie do radia */
+.set-details {
+  border-top: 1px solid var(--obwodka);
+}
+
+.set-details summary {
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--akcent);
+  cursor: pointer;
+  list-style: none;
+}
+
+.set-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.set-details summary::before {
+  content: '▸ ';
+}
+
+.set-details[open] summary::before {
+  content: '▾ ';
+}
+
+.freq-list {
+  margin: 0;
+  padding: 0 1rem 0.9rem;
+  list-style: none;
+  max-height: 15rem;
+  overflow-y: auto;
+  font-size: 0.9rem;
+}
+
+.freq-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #eceff3;
+}
+
+/* Nazwa kanalu tak, jak zobaczy ja uzytkownik na wyswietlaczu radia */
+.freq-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #4a545f;
+}
+
+.freq-value {
+  font-variant-numeric: tabular-nums;
 }
