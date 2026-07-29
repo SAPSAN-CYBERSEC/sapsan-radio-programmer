@@ -8,6 +8,7 @@
  */
 
 import type { FrequencySet, PresetChannel } from './bands.ts';
+import { regionForKey, type Region } from './regions.ts';
 import data from './services-pl.json' with { type: 'json' };
 
 /** Sluzby przypisane do konkretnej miejscowosci. */
@@ -48,12 +49,45 @@ function toChannels(freqs: number[], prefix: string): PresetChannel[] {
   }));
 }
 
-/** Lista miejscowosci do wyboru. Wojewodztwa (pisane wersalikami) ida na gore. */
-export function placeNames(): string[] {
-  const all = Object.keys(places);
-  const regions = all.filter((p) => p === p.toUpperCase()).sort((a, b) => a.localeCompare(b, 'pl'));
-  const cities = all.filter((p) => p !== p.toUpperCase()).sort((a, b) => a.localeCompare(b, 'pl'));
-  return [...regions, ...cities];
+export interface PlaceGroups {
+  /** Wojewodztwa: `key` idzie do danych, `region` niesie nazwy w czterech jezykach. */
+  regions: Array<{ key: string; region: Region }>;
+  /** Miejscowosci - nazwy wlasne, tych nie tlumaczymy. */
+  cities: string[];
+  /** Wpisy ze zrodla, ktore miejscowoscia nie sa (CNBOP, OGOLNOPOLSKI). */
+  other: string[];
+}
+
+/**
+ * Lista wyboru miejsca, w trzech grupach.
+ *
+ * Wczesniej dzialo sie to na heurystyce "wersaliki = wojewodztwo", przez co jedno
+ * wojewodztwo pokazywalo sie dwa razy (zrodlo pisze je na dwa sposoby), a razem
+ * z nimi na gore listy wchodzily CNBOP i OGOLNOPOLSKI, ktore miejscami nie sa.
+ */
+export function placeGroups(): PlaceGroups {
+  const byPl = (a: string, b: string) => a.localeCompare(b, 'pl');
+  const regions: PlaceGroups['regions'] = [];
+  const cities: string[] = [];
+  const other: string[] = [];
+  const seen = new Set<Region>();
+
+  for (const key of Object.keys(places)) {
+    const region = regionForKey(key);
+    if (region) {
+      // Dwa zapisy tej samej nazwy to jedna pozycja na liscie.
+      if (!seen.has(region)) {
+        seen.add(region);
+        regions.push({ key, region });
+      }
+      continue;
+    }
+    (key === key.toUpperCase() ? other : cities).push(key);
+  }
+
+  cities.sort(byPl);
+  other.sort(byPl);
+  return { regions, cities, other };
 }
 
 /** Zestawy sluzb dla wybranej miejscowosci. Pusta lista, gdy nic nie wybrano. */

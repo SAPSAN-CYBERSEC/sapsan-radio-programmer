@@ -25,6 +25,10 @@ interface Dict {
   place: string;
   placeNone: string;
   placeHint: string;
+  /** Naglowki grup na liscie wyboru miejsca. */
+  groupRegions: string;
+  groupCities: string;
+  groupOther: string;
   showFreqs: (n: number) => string;
   model: string;
   /** Dopisek przy starszym UV-5R, bo sama nazwa nie odroznia go od nowszego. */
@@ -172,6 +176,9 @@ const en: Dict = {
     place: 'Place',
   placeNone: '- pick a place -',
   placeHint: 'Polish emergency service channels depend on the place. Pick one to see them.',
+  groupRegions: 'Voivodeships',
+  groupCities: 'Cities and towns',
+  groupOther: 'Other',
   showFreqs: (n) => `Show all ${n} frequencies`,
   model: 'Which radio is it?',
   modelOlder: 'older, before BFB291',
@@ -282,6 +289,9 @@ const pl: Dict = {
     place: 'Miejscowość',
   placeNone: '- wybierz miejscowość -',
   placeHint: 'Kanały polskich służb zależą od miejscowości. Wybierz ją, żeby je zobaczyć.',
+  groupRegions: 'Województwa',
+  groupCities: 'Miejscowości',
+  groupOther: 'Pozostałe',
   showFreqs: (n) => `Pokaż wszystkie ${n} częstotliwości`,
   model: 'Jakie to radio?',
   modelOlder: 'starsze, sprzed BFB291',
@@ -392,6 +402,9 @@ const de: Dict = {
     place: 'Ort',
   placeNone: '- Ort wählen -',
   placeHint: 'Kanäle polnischer Dienste hängen vom Ort ab. Wähle einen, um sie zu sehen.',
+  groupRegions: 'Woiwodschaften',
+  groupCities: 'Städte und Orte',
+  groupOther: 'Sonstige',
   showFreqs: (n) => `Alle ${n} Frequenzen anzeigen`,
   model: 'Welches Gerät ist es?',
   modelOlder: 'älter, vor BFB291',
@@ -502,6 +515,9 @@ const cs: Dict = {
     place: 'Místo',
   placeNone: '- vyber místo -',
   placeHint: 'Kanály polských složek závisí na místě. Vyber ho, aby se zobrazily.',
+  groupRegions: 'Vojvodství',
+  groupCities: 'Města a obce',
+  groupOther: 'Ostatní',
   showFreqs: (n) => `Zobrazit všech ${n} frekvencí`,
   model: 'Jaká je to vysílačka?',
   modelOlder: 'starší, před BFB291',

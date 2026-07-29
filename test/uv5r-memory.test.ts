@@ -30,7 +30,7 @@ import {
   countChannels,
 } from '../src/data/bands.ts';
 import { buildChannels } from '../src/data/build-channels.ts';
-import { localServiceSets, nationalServiceSets, placeNames } from '../src/data/services.ts';
+import { localServiceSets, nationalServiceSets, placeGroups } from '../src/data/services.ts';
 import { formatFreq } from '../src/i18n/index.ts';
 
 const base: Channel = {
@@ -224,13 +224,33 @@ test('polskie sluzby: krajowe kanaly strazy maja wlasna numeracje', () => {
   assert.ok(fireNat!.channels.every((c) => c.rx >= 148_000_000 && c.rx <= 150_000_000));
 });
 
-test('polskie sluzby: lista miejscowosci zaczyna sie od wojewodztw', () => {
-  const names = placeNames();
-  assert.ok(names.length > 300, `miejscowosci: ${names.length}`);
-  assert.ok(names.includes('Wrocław') && names.includes('Kraków'));
-  // Wojewodztwa pisane wersalikami maja byc na gorze listy, przed miastami.
-  assert.equal(names[0], names[0]!.toUpperCase());
-  assert.ok(names.indexOf('DOLNOŚLĄSKIE') < names.indexOf('Wrocław'));
+test('polskie sluzby: wojewodztwa sa osobna grupa, bez duplikatow i smieci', () => {
+  const { regions, cities, other } = placeGroups();
+
+  // Wojewodztw jest szesnascie i tyle ma byc na liscie, mimo ze zrodlo
+  // zapisuje kujawsko-pomorskie na dwa sposoby.
+  assert.equal(regions.length, 16, `wojewodztw: ${regions.length}`);
+  const keys = regions.map((r) => r.key);
+  assert.equal(new Set(keys).size, keys.length, 'klucze wojewodztw sie powtarzaja');
+
+  // Klucz musi zostac taki, jak w danych - po nim lecy odczyt czestotliwosci.
+  assert.ok(localServiceSets(regions.find((r) => r.region.names.en === 'Masovian')!.key).length > 0);
+
+  // Nazwa w kazdym z czterech jezykow, zadna pusta.
+  for (const { region } of regions) {
+    for (const lang of ['pl', 'en', 'de', 'cs'] as const) {
+      assert.ok(region.names[lang]?.length, `brak nazwy ${lang} dla ${region.keys[0]}`);
+    }
+  }
+
+  assert.ok(cities.length > 300, `miejscowosci: ${cities.length}`);
+  assert.ok(cities.includes('Wrocław') && cities.includes('Kraków'));
+
+  // CNBOP i OGOLNOPOLSKI to nie miejscowosci i nie wojewodztwa - maja siedziec
+  // w trzeciej grupie, a nie udawac region na gorze listy.
+  assert.ok(other.includes('CNBOP'), 'CNBOP wypadl z grupy pozostalych');
+  assert.ok(!cities.includes('CNBOP'));
+  assert.ok(regions.every((r) => !r.region.keys.includes('CNBOP')));
 });
 
 test('czestotliwosc wyswietla sie dokladnie tak, jak trafia do radia', () => {

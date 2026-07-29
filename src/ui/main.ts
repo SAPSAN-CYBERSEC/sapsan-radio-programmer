@@ -19,7 +19,7 @@ import {
   type RadioFamily,
 } from '../radio/uv5r-protocol.ts';
 import { WebSerialTransport, isWebSerialSupported } from '../radio/web-serial.ts';
-import { localServiceSets, nationalServiceSets, placeNames } from '../data/services.ts';
+import { localServiceSets, nationalServiceSets, placeGroups } from '../data/services.ts';
 import { t, DEFAULT_LANG, LANGS, formatFreq, type Lang } from '../i18n/index.ts';
 import { ChannelSheet } from './sheet.ts';
 
@@ -63,7 +63,6 @@ function show(stepId: string): void {
   $('restore').hidden = stepId === 'step-connect';
 }
 
-/** Przepisuje wszystkie napisy na aktualny jezyk. */
 /**
  * Lista modeli do wyboru. Oznaczenia handlowe zostaja jak sa, tlumaczy sie tylko
  * dopisek odrozniajacy starszy UV-5R od nowszego - dlatego lista musi wracac tutaj
@@ -80,6 +79,7 @@ function renderModelOptions(): void {
   if (chosen) sel.value = chosen;
 }
 
+/** Przepisuje wszystkie napisy na aktualny jezyk. */
 function applyTexts(): void {
   const d = tr();
   document.documentElement.lang = lang;
@@ -143,9 +143,23 @@ function applyTexts(): void {
 
   $('t-place').textContent = d.place;
   const placeSel = $<HTMLSelectElement>('place');
+  // Wojewodztwa maja nazwy w czterech jezykach, miejscowosci to nazwy wlasne
+  // i zostaja jak sa. Grupy sa po to, zeby przy angielskim interfejsie bylo
+  // widac, ze gora listy to regiony, a nie miasta o dziwnej pisowni.
+  const groups = placeGroups();
+  const opt = (value: string, label: string) => `<option value="${value}">${label}</option>`;
+  const optgroup = (label: string, items: string) =>
+    items ? `<optgroup label="${label}">${items}</optgroup>` : '';
+  const regionOpts = groups.regions
+    .map((r) => ({ key: r.key, name: r.region.names[lang] }))
+    .sort((a, b) => a.name.localeCompare(b.name, lang))
+    .map((r) => opt(r.key, r.name))
+    .join('');
   placeSel.innerHTML =
-    `<option value="">${d.placeNone}</option>` +
-    placeNames().map((p) => `<option value="${p}">${p}</option>`).join('');
+    opt('', d.placeNone) +
+    optgroup(d.groupRegions, regionOpts) +
+    optgroup(d.groupCities, groups.cities.map((c) => opt(c, c)).join('')) +
+    optgroup(d.groupOther, groups.other.map((o) => opt(o, o)).join(''));
   placeSel.value = place ?? '';
   $('place-wrap').hidden = country !== 'PL';
 
