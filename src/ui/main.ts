@@ -64,10 +64,27 @@ function show(stepId: string): void {
 }
 
 /** Przepisuje wszystkie napisy na aktualny jezyk. */
+/**
+ * Lista modeli do wyboru. Oznaczenia handlowe zostaja jak sa, tlumaczy sie tylko
+ * dopisek odrozniajacy starszy UV-5R od nowszego - dlatego lista musi wracac tutaj
+ * przy kazdej zmianie jezyka, a nie byc skladana raz przy starcie.
+ */
+function renderModelOptions(): void {
+  const d = tr();
+  const sel = $<HTMLSelectElement>('model');
+  const chosen = sel.value;
+  sel.innerHTML = MODELS.map((m) => {
+    const label = m.note ? `${m.label} (${d[m.note]})` : m.label;
+    return `<option value="${m.id}">${label}</option>`;
+  }).join('');
+  if (chosen) sel.value = chosen;
+}
+
 function applyTexts(): void {
   const d = tr();
   document.documentElement.lang = lang;
   document.title = d.title;
+  renderModelOptions();
 
   const map: Record<string, string> = {
     't-title': d.title,
@@ -370,7 +387,7 @@ function init(): void {
   sheet = new ChannelSheet($('sheet'), { onChange: () => updateSheetCounter() });
 
   const modelSel = $<HTMLSelectElement>('model');
-  modelSel.innerHTML = MODELS.map((m) => `<option value="${m.id}">${m.label}</option>`).join('');
+  renderModelOptions();
   modelSel.addEventListener('change', () => {
     family = MODELS.find((m) => m.id === modelSel.value)?.family ?? 'uv5r';
   });

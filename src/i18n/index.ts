@@ -27,6 +27,8 @@ interface Dict {
   placeHint: string;
   showFreqs: (n: number) => string;
   model: string;
+  /** Dopisek przy starszym UV-5R, bo sama nazwa nie odroznia go od nowszego. */
+  modelOlder: string;
   helpTitle: string;
   helpNoPort: string;
   helpNoAnswer: string;
@@ -172,6 +174,7 @@ const en: Dict = {
   placeHint: 'Polish emergency service channels depend on the place. Pick one to see them.',
   showFreqs: (n) => `Show all ${n} frequencies`,
   model: 'Which radio is it?',
+  modelOlder: 'older, before BFB291',
   helpTitle: "The radio is not showing up. What now?",
   helpNoPort: "**Nothing on the list when you click Connect.** The computer does not see the cable at all, so the browser cannot either. Try a different USB port, then check the driver below.",
   helpNoAnswer: "**The port is there but the radio stays silent.** Push the plug in until it clicks - Baofeng sockets are stiff and a half-inserted plug looks connected. Then check that the radio is on, and that you picked the right model.",
@@ -281,6 +284,7 @@ const pl: Dict = {
   placeHint: 'Kanały polskich służb zależą od miejscowości. Wybierz ją, żeby je zobaczyć.',
   showFreqs: (n) => `Pokaż wszystkie ${n} częstotliwości`,
   model: 'Jakie to radio?',
+  modelOlder: 'starsze, sprzed BFB291',
   helpTitle: "Radio się nie pokazuje. Co teraz?",
   helpNoPort: "**Po kliknięciu Połącz lista jest pusta.** Komputer w ogóle nie widzi kabla, więc przeglądarka też nie może. Spróbuj innego gniazda USB, potem sprawdź sterownik niżej.",
   helpNoAnswer: "**Port jest, ale radio milczy.** Dociśnij wtyk, aż wskoczy - gniazda w Baofengu są twarde, a wtyk wsunięty do połowy wygląda jak podłączony. Potem sprawdź, czy radio jest włączone i czy wybrany model się zgadza.",
@@ -390,6 +394,7 @@ const de: Dict = {
   placeHint: 'Kanäle polnischer Dienste hängen vom Ort ab. Wähle einen, um sie zu sehen.',
   showFreqs: (n) => `Alle ${n} Frequenzen anzeigen`,
   model: 'Welches Gerät ist es?',
+  modelOlder: 'älter, vor BFB291',
   helpTitle: "Das Gerät taucht nicht auf. Was nun?",
   helpNoPort: "**Nach Klick auf Verbinden ist die Liste leer.** Der Rechner sieht das Kabel gar nicht, also kann es der Browser auch nicht. Probiere einen anderen USB-Anschluss und prüfe dann den Treiber unten.",
   helpNoAnswer: "**Der Port ist da, aber das Gerät schweigt.** Drücke den Stecker hinein, bis er einrastet - die Buchsen sind stramm und ein halb steckender Stecker sieht verbunden aus. Prüfe dann, ob das Gerät an ist und das gewählte Modell stimmt.",
@@ -499,6 +504,7 @@ const cs: Dict = {
   placeHint: 'Kanály polských složek závisí na místě. Vyber ho, aby se zobrazily.',
   showFreqs: (n) => `Zobrazit všech ${n} frekvencí`,
   model: 'Jaká je to vysílačka?',
+  modelOlder: 'starší, před BFB291',
   helpTitle: "Vysílačka se neobjevuje. Co teď?",
   helpNoPort: "**Po kliknutí na Připojit je seznam prázdný.** Počítač kabel vůbec nevidí, takže ho nevidí ani prohlížeč. Zkus jiný USB port a pak zkontroluj ovladač níže.",
   helpNoAnswer: "**Port je, ale vysílačka mlčí.** Zatlač konektor, dokud nezacvakne - konektory jsou tuhé a napůl zasunutý vypadá jako připojený. Pak zkontroluj, jestli je vysílačka zapnutá a jestli sedí vybraný model.",

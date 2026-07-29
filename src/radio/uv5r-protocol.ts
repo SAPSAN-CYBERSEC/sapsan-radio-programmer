@@ -40,12 +40,19 @@ export type RadioFamily = keyof typeof MAGICS;
  * sekwencje powitalna, milknie na kilkanascie sekund, wiec zgadywanie po kolei
  * bywa wolniejsze i zawodne. Uzytkownik i tak wie, co kupil.
  */
-export const MODELS: Array<{ id: string; label: string; family: RadioFamily }> = [
+export const MODELS: Array<{
+  id: string;
+  /** Same oznaczenia handlowe - tych nie tlumaczymy. */
+  label: string;
+  family: RadioFamily;
+  /** Klucz w slowniku, jesli sama nazwa nie odroznia modelu od innego wpisu. */
+  note?: 'modelOlder';
+}> = [
   { id: 'uv5r', label: 'UV-5R / UV-5RA / UV-5RB / UV-5RC / BF-F8 / GT-3', family: 'uv5r' },
   { id: 'uv82', label: 'UV-82 / UV-82HP / P15UV', family: 'uv82' },
   { id: 'uv6', label: 'UV-6 / UV-6R', family: 'uv6' },
   { id: 'bfA58', label: 'BF-A58 / BF-9700', family: 'bfA58' },
-  { id: 'uv5rOrig', label: 'UV-5R (starsze, sprzed BFB291)', family: 'uv5rOrig' },
+  { id: 'uv5rOrig', label: 'UV-5R', family: 'uv5rOrig', note: 'modelOlder' },
 ];
 
 /**
