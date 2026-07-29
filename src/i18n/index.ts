@@ -29,6 +29,10 @@ interface Dict {
   groupRegions: string;
   groupCities: string;
   groupOther: string;
+  /** Stopka: co sie dzieje z danymi i kto za narzedziem stoi. */
+  footerPrivacy: string;
+  /** `shop` to gotowy odnosnik - tekst dookola zmienia sie z jezykiem, adres nie. */
+  footerMadeBy: (shop: string) => string;
   showFreqs: (n: number) => string;
   model: string;
   /** Dopisek przy starszym UV-5R, bo sama nazwa nie odroznia go od nowszego. */
@@ -179,6 +183,8 @@ const en: Dict = {
   groupRegions: 'Voivodeships',
   groupCities: 'Cities and towns',
   groupOther: 'Other',
+  footerPrivacy: 'Everything runs in your browser. Nothing is sent anywhere.',
+  footerMadeBy: (shop) => `A free, open source tool by ${shop} - a shop with Baofeng radios and programming cables.`,
   showFreqs: (n) => `Show all ${n} frequencies`,
   model: 'Which radio is it?',
   modelOlder: 'older, before BFB291',
@@ -292,6 +298,8 @@ const pl: Dict = {
   groupRegions: 'Województwa',
   groupCities: 'Miejscowości',
   groupOther: 'Pozostałe',
+  footerPrivacy: 'Wszystko dzieje się w Twojej przeglądarce. Nic nie jest nigdzie wysyłane.',
+  footerMadeBy: (shop) => `Darmowe narzędzie o otwartym kodzie od ${shop} - sklepu z radiotelefonami Baofeng i kablami programującymi.`,
   showFreqs: (n) => `Pokaż wszystkie ${n} częstotliwości`,
   model: 'Jakie to radio?',
   modelOlder: 'starsze, sprzed BFB291',
@@ -405,6 +413,8 @@ const de: Dict = {
   groupRegions: 'Woiwodschaften',
   groupCities: 'Städte und Orte',
   groupOther: 'Sonstige',
+  footerPrivacy: 'Alles läuft in deinem Browser. Nichts wird irgendwohin gesendet.',
+  footerMadeBy: (shop) => `Ein kostenloses Open-Source-Werkzeug von ${shop} - einem Shop mit Baofeng-Funkgeräten und Programmierkabeln.`,
   showFreqs: (n) => `Alle ${n} Frequenzen anzeigen`,
   model: 'Welches Gerät ist es?',
   modelOlder: 'älter, vor BFB291',
@@ -518,6 +528,8 @@ const cs: Dict = {
   groupRegions: 'Vojvodství',
   groupCities: 'Města a obce',
   groupOther: 'Ostatní',
+  footerPrivacy: 'Vše běží ve tvém prohlížeči. Nic se nikam neodesílá.',
+  footerMadeBy: (shop) => `Bezplatný nástroj s otevřeným kódem od ${shop} - obchodu s vysílačkami Baofeng a programovacími kabely.`,
   showFreqs: (n) => `Zobrazit všech ${n} frekvencí`,
   model: 'Jaká je to vysílačka?',
   modelOlder: 'starší, před BFB291',

@@ -246,11 +246,14 @@ test('polskie sluzby: wojewodztwa sa osobna grupa, bez duplikatow i smieci', () 
   assert.ok(cities.length > 300, `miejscowosci: ${cities.length}`);
   assert.ok(cities.includes('Wrocław') && cities.includes('Kraków'));
 
-  // CNBOP i OGOLNOPOLSKI to nie miejscowosci i nie wojewodztwa - maja siedziec
-  // w trzeciej grupie, a nie udawac region na gorze listy.
-  assert.ok(other.includes('CNBOP'), 'CNBOP wypadl z grupy pozostalych');
-  assert.ok(!cities.includes('CNBOP'));
-  assert.ok(regions.every((r) => !r.region.keys.includes('CNBOP')));
+  // CNBOP (instytut PSP, nie miejscowosc) wylecial ze zrodla calkiem.
+  const all = [...cities, ...other, ...regions.map((r) => r.key)];
+  assert.ok(!all.includes('CNBOP'), 'CNBOP wrocil do danych');
+
+  // OGOLNOPOLSKI to zasieg, nie miejsce - ma siedziec w trzeciej grupie,
+  // a nie udawac wojewodztwa na gorze listy.
+  assert.ok(other.includes('OGÓLNOPOLSKI'), 'OGOLNOPOLSKI wypadl z grupy pozostalych');
+  assert.ok(!cities.includes('OGÓLNOPOLSKI'));
 });
 
 test('czestotliwosc wyswietla sie dokladnie tak, jak trafia do radia', () => {

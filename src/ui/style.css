@@ -246,6 +246,14 @@ button.big.danger:disabled {
   font-size: 0.9rem;
 }
 
+.footer p {
+  margin: 0.25rem 0;
+}
+
+.footer a {
+  color: #1f5aa8;
+}
+
 /* Naglowek z wyborem jezyka i kraju */
 .head-row {
   display: flex;

@@ -36,6 +36,11 @@ NATIONAL = {
 # nie da sie odtworzyc, ktora czestotliwosc nalezy do ktorego miasta.
 SKIP = {'Inne-miasta-Polski', 'PSP_-BF'}
 
+# Etykiety, ktore zrodlo trzyma w kolumnie miejscowosci, choc miejscowosciami nie sa.
+# CNBOP to Centrum Naukowo-Badawcze Ochrony Przeciwpozarowej w Jozefowie - instytut
+# z wlasna czestotliwoscia, ktorego nikt nie szuka po nazwie na liscie miast.
+NOT_A_PLACE = {'CNBOP'}
+
 
 def is_header(label: str, freqs: list) -> bool:
     low = label.lower()
@@ -84,7 +89,7 @@ for page, key in LOCAL.items():
         if is_header(r['label'], r['freqs']):
             continue
         place = clean_place(r['label'])
-        if not place:
+        if not place or place in NOT_A_PLACE:
             continue
         usable = [f for f in r['freqs'] if f not in BAND_EDGES]
         if not usable:

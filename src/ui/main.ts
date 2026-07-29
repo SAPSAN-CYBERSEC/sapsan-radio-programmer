@@ -118,8 +118,15 @@ function applyTexts(): void {
     't-restore-lead': d.restoreLead,
     'btn-restore': d.restoreDo,
     'btn-restart': d.again,
+    't-footer': d.footerPrivacy,
   };
   for (const [id, text] of Object.entries(map)) $(id).textContent = text;
+
+  // Kto za tym stoi. Odnosnik otwiera sie w nowej karcie, bo uzytkownik bywa
+  // w polowie programowania radia i nie ma go po co z tego wyrzucac.
+  $('t-footer-by').innerHTML = d.footerMadeBy(
+    '<a href="https://sapsan-sklep.pl/" target="_blank" rel="noopener">SAPSAN CYBERSEC</a>',
+  );
 
   // Pomoc sklada sie z akapitow, w ktorych **pogrubienie** niesie tresc - stad
   // minimalna zamiana zamiast wciagania biblioteki do markdownu.
