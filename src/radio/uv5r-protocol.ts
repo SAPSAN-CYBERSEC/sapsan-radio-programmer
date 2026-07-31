@@ -126,6 +126,10 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /**
  * Wysyla sekwencje powitalna i odbiera identyfikator radia.
  * Bajty magiczne musza isc pojedynczo z przerwa - radio gubi je przy wysylce hurtem.
+ *
+ * Identyfikator ma 8 bajtow, ale nowsze UV-6 odpowiadaja dwunastoma zakonczonymi
+ * 0xDD. CHIRP czyta wtedy do 0xDD i normalizuje wynik do 8 bajtow - robimy tak samo,
+ * inaczej nadmiarowe bajty zostaja w buforze i "potwierdzenie" czyta smieci.
  */
 async function tryIdent(t: Transport, magic: Uint8Array): Promise<Uint8Array | null> {
   await t.flush();
@@ -146,11 +150,28 @@ async function tryIdent(t: Transport, magic: Uint8Array): Promise<Uint8Array | n
   const ident = await t.read(8);
 
   await t.write(new Uint8Array([ACK]));
+  const next = await t.read(1);
+  // Osmiobajtowy identyfikator: zaraz po naszym ACK przychodzi ACK radia.
+  if (next[0] === ACK) return ident;
+
+  // Dwunastobajtowy: to, co wzielismy za potwierdzenie, jest dziewiatym bajtem.
+  // Doczytujemy do 0xDD (najwyzej trzy bajty) i dopiero potem czekamy na ACK.
+  // Zalozenie jak w CHIRP: bajt 0xDD zamyka identyfikator i nie wystepuje wczesniej.
+  const tail = [next[0]!];
+  while (tail[tail.length - 1] !== 0xdd) {
+    if (tail.length === 4) throw new RadioError('errNoConfirm');
+    const byte = await t.read(1);
+    tail.push(byte[0]!);
+  }
+  const full = new Uint8Array([...ident, ...tail]);
+
   const confirm = await t.read(1);
   if (confirm[0] !== ACK) {
     throw new RadioError('errNoConfirm');
   }
-  return ident;
+  // Normalizacja CHIRP: z dwunastu bajtow zostaja [0], [3], [5] i ogon od [7],
+  // zeby obraz pamieci mial ten sam uklad co przy starszych radiach.
+  return new Uint8Array([full[0]!, full[3]!, full[5]!, ...full.subarray(7)]);
 }
 
 export interface IdentifiedRadio {
@@ -178,14 +199,28 @@ export async function identify(t: Transport, only?: RadioFamily): Promise<Identi
         await sleep(RETRY_DELAY_MS);
         if (t.reconnect) await t.reconnect();
       }
-      const ident = await tryIdent(t, MAGICS[only]);
+      // Powitanie urwane w polowie (zgubiony bajt identyfikatora albo potwierdzenia)
+      // to nieudana proba, nie koniec rozmowy - CHIRP w tym miejscu tez ponawia.
+      let ident: Uint8Array | null;
+      try {
+        ident = await tryIdent(t, MAGICS[only]);
+      } catch (err) {
+        if (!(err instanceof RadioError)) throw err;
+        ident = null;
+      }
       if (ident) return { family: only, ident };
     }
     throw new RadioError('errIdentSilent');
   }
 
   for (const family of IDENT_ORDER) {
-    const ident = await tryIdent(t, MAGICS[family]);
+    let ident: Uint8Array | null;
+    try {
+      ident = await tryIdent(t, MAGICS[family]);
+    } catch (err) {
+      if (!(err instanceof RadioError)) throw err;
+      ident = null;
+    }
     if (ident) return { family, ident };
     // Samo czekanie nie wystarczy - radio trzeba odlaczyc i podlaczyc na nowo.
     // Transport bez `reconnect` (np. atrapa w testach) po prostu odczekuje.
@@ -221,7 +256,15 @@ async function readBlock(t: Transport, addr: number, size: number, first: boolea
   if (header[0] !== CMD_WRITE || respAddr !== addr || header[3] !== size) {
     throw new RadioError('errReadGarbled', { addr: addr.toString(16) });
   }
-  return t.read(size);
+  const chunk = await t.read(size);
+
+  // Potwierdzamy radiu kazdy odebrany blok - CHIRP robi to po kazdym chunku
+  // (write 0x06 + pauza). Bez tego ostatni blok odczytu zostaje niedomkniety
+  // i czesc firmware odrzuca potem pierwszy zapis w tej samej sesji.
+  await t.write(new Uint8Array([ACK]));
+  await sleep(50);
+
+  return chunk;
 }
 
 /** Zapisuje jeden blok pamieci. */
@@ -283,14 +326,22 @@ async function writeAllRanges(t: Transport, image: Uint8Array, onProgress?: Prog
 }
 
 /**
- * Odswieza sesje programowania: rozlacza sie i wita na nowo.
+ * Odswieza sesje programowania: rozlacza sie, wita na nowo i wykonuje jeden
+ * odczyt rozgrzewkowy.
+ *
  * Samo powitanie na tym samym polaczeniu nie wystarcza - radio wraca do rozmowy
- * dopiero po ponownym otwarciu portu.
+ * dopiero po ponownym otwarciu portu. Odczyt rozgrzewkowy jest rownie wazny:
+ * zaden sterownik nie zapisuje zaraz po powitaniu (CHIRP przed kazdym uploadem
+ * czyta bloki z radia i ostrzega, ze swiezo przywitane radia potrafia odpowiadac
+ * blednie, dopoki czegos nie przeczytaja). Zapis jako pierwsza komenda po idencie
+ * konczyl sie na Windows 7 odrzuceniem bloku pod adresem 0x0 - takze w ponowieniu,
+ * przez co blad wygladal na nienaprawialny.
  */
 async function refreshSession(t: Transport, family?: RadioFamily): Promise<void> {
   await t.flush();
   if (t.reconnect) await t.reconnect();
   await identify(t, family);
+  await readBlock(t, 0x0000, READ_BLOCK, true);
 }
 
 /** Zapisuje do radia wylacznie obszary kanalow i nazw z podanego obrazu. */
@@ -303,6 +354,9 @@ export async function writeChannels(
   if (image.length < MAIN_MEMORY_SIZE) {
     throw new RadioError('errBadImage', { got: image.length, want: MAIN_MEMORY_SIZE });
   }
+  // Resztki w buforze (np. spozniona odpowiedz poprzedniej rozmowy) zostalyby wziete
+  // za potwierdzenie pierwszego bloku i cala kontrola zapisu przesunelaby sie o jeden.
+  await t.flush();
   try {
     await writeAllRanges(t, image, onProgress);
   } catch (err) {

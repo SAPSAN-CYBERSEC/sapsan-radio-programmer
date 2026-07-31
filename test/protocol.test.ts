@@ -124,6 +124,52 @@ test('urwana sesja przy zapisie konczy sie bledem, nie cicha porazka', async () 
   await assert.rejects(() => writeChannels(radio, image), (err: unknown) => err instanceof RadioError);
 });
 
+test('zapis nie zostawia niedobranych potwierdzen ani nie bierze resztek za ACK', async () => {
+  // Resztka w buforze przed zapisem przesuwalaby cala kontrole o jeden blok:
+  // kazdy blok bylby "potwierdzany" ACK-iem poprzedniego, a blad wychodzilby
+  // pod cudzym adresem. Zapis ma zaczac od czystego bufora i skonczyc z pustym.
+  const radio = new FakeRadio();
+  await identify(radio);
+  const image = await readMainMemory(radio);
+  writeChannelsIntoImage(image, buildChannels([PMR446]).channels);
+
+  radio.plantStrayByte(0x06);
+  await writeChannels(radio, image);
+
+  assert.equal(radio.pendingBytes(), 0, 'po zapisie nie moga zostac nieodebrane bajty');
+  const verdict = await verifyChannels(radio, image);
+  assert.equal(verdict.ok, true);
+});
+
+test('weryfikacja po wygasnieciu sesji wita sie na nowo', async () => {
+  // Po zapisie radio konczy sesje - pierwsza proba odczytu weryfikujacego
+  // przepada i program ma sie przywitac jeszcze raz, a nie zglosic blad.
+  const radio = new FakeRadio();
+  await identify(radio);
+  const image = await readMainMemory(radio);
+  writeChannelsIntoImage(image, buildChannels([PMR446]).channels);
+  await writeChannels(radio, image);
+
+  radio.expireSession();
+  const verdict = await verifyChannels(radio, image, undefined, 'uv5r');
+  assert.equal(verdict.ok, true);
+});
+
+test('12-bajtowy identyfikator nowszych UV-6 jest normalizowany jak w CHIRP', async () => {
+  // Nowsze UV-6 odpowiadaja dwunastoma bajtami zakonczonymi 0xDD. Program ma je
+  // przyjac, dokonczyc potwierdzenie i oddac 8 bajtow w ukladzie CHIRP-a -
+  // wczesniej cztery nadmiarowe bajty zostawaly w buforze i kazde polaczenie
+  // konczylo sie bledem "radio nie potwierdzilo".
+  const radio = new FakeRadio({ magic: [...MAGICS.uv6], longIdent: true });
+  const result = await identify(radio, 'uv6');
+
+  assert.equal(result.family, 'uv6');
+  // Z [50 01 02 bb 01 ff 01 20 12 08 23 dd] zostaja pozycje 0, 3, 5 i ogon od 7.
+  assert.deepEqual([...result.ident], [0x50, 0xbb, 0xff, 0x20, 0x12, 0x08, 0x23, 0xdd]);
+  // Bufor musi byc pusty - to wlasnie niedobrane bajty psuly kolejne ramki.
+  assert.equal(radio.pendingBytes(), 0);
+});
+
 test('plik kopii jest sprawdzany, zanim trafi do radia', () => {
   // Wgranie obrazu z innego modelu zamienia radio w cegle.
   assert.equal(looksLikeUv5rImage(new Uint8Array(MAIN_MEMORY_SIZE).fill(0xff)), true);
