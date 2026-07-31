@@ -21,6 +21,11 @@ export interface FakeRadioOptions {
   corruptAt?: number;
   /** Radio przestaje odpowiadac po tylu ramkach - do testowania urwanej sesji. */
   dieAfter?: number;
+  /**
+   * Tyle pierwszych powitan zostaje bez odpowiedzi - jak przy sterowniku,
+   * ktory zgubil bajt sekwencji. Do testowania ponawiania powitania.
+   */
+  ignoreGreetings?: number;
 }
 
 export class FakeRadio implements Transport {
@@ -29,6 +34,8 @@ export class FakeRadio implements Transport {
   private outbox: number[] = [];
   private magic: number[];
   private frames = 0;
+  /** Ile powitan radio juz zignorowalo - por. `ignoreGreetings`. */
+  private greetingsIgnored = 0;
   /** Czy trwa sesja programowania - radio odpowiada dopiero po powitaniu. */
   private greeted = false;
   /** Czy poprzednia ramka wymaga potwierdzenia przed odpowiedzia. */
@@ -76,6 +83,10 @@ export class FakeRadio implements Transport {
         const matches = this.inbox.every((b, i) => b === this.magic[i]);
         this.inbox = [];
         if (matches) {
+          if (this.greetingsIgnored < (this.opts.ignoreGreetings ?? 0)) {
+            this.greetingsIgnored++;
+            return;
+          }
           this.greeted = true;
           this.outbox.push(ACK);
         }

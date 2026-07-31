@@ -20,8 +20,10 @@ const READ_TIMEOUT_MS = 1500;
  * otwarciu portu zostaje bez odpowiedzi, to samo powitanie po krotkiej przerwie
  * dziala za pierwszym razem. Przejsciowka CH340 potrzebuje chwili na ustalenie
  * stanu linii DTR i RTS - radio odpowiada tylko wtedy, gdy obie sa aktywne.
+ * Na macOS wystarczalo 500 ms; sterownik CH340 pod Windows bywa wolniejszy,
+ * wiec dajemy zapas.
  */
-const PORT_SETTLE_MS = 500;
+const PORT_SETTLE_MS = 1000;
 /**
  * Ile odczekac z zamknietym portem, zanim otworzymy go ponownie.
  *
@@ -40,6 +42,8 @@ export class WebSerialTransport implements Transport {
   private writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
   /** Bajty odebrane, a jeszcze nieskonsumowane przez `read`. */
   private buffer = new Uint8Array(0);
+  /** Rozpoczete, a nieukonczone `reader.read()` - wynik odbierze kolejne wywolanie. */
+  private pendingRead: Promise<ReadableStreamReadResult<Uint8Array>> | null = null;
 
   private readonly port: SerialPort;
 
@@ -97,16 +101,26 @@ export class WebSerialTransport implements Transport {
     return out;
   }
 
-  /** Czyta porcje danych albo zwraca null, gdy uplynal czas. */
+  /**
+   * Czyta porcje danych albo zwraca null, gdy uplynal czas.
+   *
+   * Przegrany wyscig z limitem czasu NIE porzuca odczytu: porzucony promise
+   * odebralby bajty, ktore przyszly o wlos za pozno, i przepadlyby na zawsze.
+   * Wolny sterownik (CH340 pod Windows) oddaje odpowiedz radia wlasnie tak -
+   * dlatego rozpoczety odczyt czeka na kolejne wywolanie.
+   */
   private async readChunk(timeoutMs: number): Promise<Uint8Array | null> {
     if (!this.reader) throw new RadioError('errPortClosed');
+    const reading = this.pendingRead ?? this.reader.read();
+    this.pendingRead = reading;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<null>((resolve) => {
       timer = setTimeout(() => resolve(null), Math.max(0, timeoutMs));
     });
     try {
-      const result = await Promise.race([this.reader.read(), timeout]);
+      const result = await Promise.race([reading, timeout]);
       if (result === null) return null;
+      this.pendingRead = null;
       return result.value ?? null;
     } finally {
       clearTimeout(timer);
@@ -115,6 +129,9 @@ export class WebSerialTransport implements Transport {
 
   async flush(): Promise<void> {
     this.buffer = new Uint8Array(0);
+    // Odczyt w locie tez idzie do kosza - flush ma odciac wszystko, co stare,
+    // a bajty odebrane przez porzucony promise nigdzie dalej nie trafia.
+    this.pendingRead = null;
   }
 
   /**
@@ -147,6 +164,7 @@ export class WebSerialTransport implements Transport {
     }
     this.reader = null;
     this.writer = null;
+    this.pendingRead = null;
   }
 
   async close(): Promise<void> {

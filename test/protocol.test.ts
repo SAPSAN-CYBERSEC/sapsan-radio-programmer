@@ -32,6 +32,14 @@ test('rozpoznanie radia po sekwencji powitalnej', async () => {
   assert.equal(result.ident.length, 8);
 });
 
+test('wskazany model dostaje kolejne proby powitania, gdy pierwsze przepadna', async () => {
+  // Sterownik przejsciowki potrafi zgubic bajt sekwencji (CH34x pod Windows) -
+  // pojedyncza proba konczylaby sie bledem, choc radio jest sprawne i podlaczone.
+  const radio = new FakeRadio({ ignoreGreetings: 2 });
+  const result = await identify(radio, 'uv5r');
+  assert.equal(result.family, 'uv5r');
+});
+
 test('radio, ktore nie odpowiada na zadna sekwencje, konczy sie czytelnym bledem', async () => {
   const radio = new FakeRadio({ magic: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00] });
   await assert.rejects(() => identify(radio), (err: unknown) => {

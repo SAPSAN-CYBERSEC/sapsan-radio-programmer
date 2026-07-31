@@ -63,6 +63,13 @@ export const MODELS: Array<{
  * i ponowne otwarcie portu, przy czym 300 ms przerwy to za malo, a 1000 ms wystarcza.
  */
 const RETRY_DELAY_MS = 1000;
+/**
+ * Ile razy probujemy powitania przy wskazanym modelu. Sterownik przejsciowki
+ * potrafi zgubic pojedyncze bajty (widziane na CH34x pod Windows) i wtedy radio
+ * nie dostaje pelnej sekwencji - kolejna proba po ponownym otwarciu portu
+ * przechodzi normalnie.
+ */
+const IDENT_ATTEMPTS = 3;
 
 /** Kolejnosc prob rozpoznania. UV-5R pierwszy, bo to najczesciej sprzedawany model. */
 const IDENT_ORDER: RadioFamily[] = ['uv5r', 'uv82', 'uv5rOrig', 'uv6', 'bfA58'];
@@ -164,8 +171,16 @@ export async function identify(t: Transport, only?: RadioFamily): Promise<Identi
   // wlasciwej sekwencji odpowiada za kazdym razem. Dlatego zgadywanie modelu jest
   // droga awaryjna, a nie domyslna.
   if (only) {
-    const ident = await tryIdent(t, MAGICS[only]);
-    if (ident) return { family: only, ident };
+    for (let attempt = 0; attempt < IDENT_ATTEMPTS; attempt++) {
+      if (attempt > 0) {
+        // Po nieudanym powitaniu radio wraca do rozmowy dopiero po ponownym
+        // otwarciu portu - samo odczekanie nie wystarcza.
+        await sleep(RETRY_DELAY_MS);
+        if (t.reconnect) await t.reconnect();
+      }
+      const ident = await tryIdent(t, MAGICS[only]);
+      if (ident) return { family: only, ident };
+    }
     throw new RadioError('errIdentSilent');
   }
 
