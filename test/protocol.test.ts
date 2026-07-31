@@ -83,6 +83,22 @@ test('zapis trafia do pamieci radia, a weryfikacja to potwierdza', async () => {
   assert.equal(verdict.ok, true);
 });
 
+test('zapis odswieza sesje, gdy radio zdazylo z niej wyjsc', async () => {
+  // Miedzy odczytem a zapisem uzytkownik wybiera kanaly i edytuje arkusz - radio
+  // przez ten czas wychodzi z trybu programowania i odrzuca pierwszy blok.
+  // Zapis ma sie z nim przywitac na nowo, a nie zwrocic blad w twarz.
+  const radio = new FakeRadio();
+  await identify(radio);
+  const image = await readMainMemory(radio);
+  writeChannelsIntoImage(image, buildChannels([PMR446]).channels);
+
+  radio.expireSession();
+  await writeChannels(radio, image, undefined, 'uv5r');
+
+  const verdict = await verifyChannels(radio, image, undefined, 'uv5r');
+  assert.equal(verdict.ok, true);
+});
+
 test('weryfikacja lapie przeklamany bajt, ktory ACK przepuscil', async () => {
   // To jest caly sens tego kroku: radio potwierdza kazdy blok, nawet gdy zapisal
   // cos innego niz dostal. Bez odczytu uzytkownik zobaczylby blad dopiero w terenie.

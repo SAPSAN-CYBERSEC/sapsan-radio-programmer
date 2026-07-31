@@ -50,6 +50,17 @@ export class FakeRadio implements Transport {
     this.magic = opts.magic ?? [0x50, 0xbb, 0xff, 0x20, 0x12, 0x07, 0x25];
   }
 
+  /**
+   * Radio wychodzi z trybu programowania, tak jak prawdziwe po chwili bezczynnosci.
+   * Kolejne polecenia zostaja bez odpowiedzi, dopoki nie przyjdzie nowe powitanie.
+   */
+  expireSession(): void {
+    this.greeted = false;
+    this.sentFirstRead = false;
+    this.inbox = [];
+    this.outbox = [];
+  }
+
   async write(data: Uint8Array): Promise<void> {
     for (const byte of data) this.feed(byte);
   }

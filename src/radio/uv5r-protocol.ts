@@ -270,11 +270,7 @@ const WRITE_RANGES: Array<[number, number]> = [
   [NAMES_ADDR, NAMES_ADDR + CHANNEL_COUNT * CHANNEL_SIZE],
 ];
 
-/** Zapisuje do radia wylacznie obszary kanalow i nazw z podanego obrazu. */
-export async function writeChannels(t: Transport, image: Uint8Array, onProgress?: ProgressFn): Promise<void> {
-  if (image.length < MAIN_MEMORY_SIZE) {
-    throw new RadioError('errBadImage', { got: image.length, want: MAIN_MEMORY_SIZE });
-  }
+async function writeAllRanges(t: Transport, image: Uint8Array, onProgress?: ProgressFn): Promise<void> {
   const total = WRITE_RANGES.reduce((sum, [from, to]) => sum + (to - from), 0);
   let done = 0;
   for (const [from, to] of WRITE_RANGES) {
@@ -283,6 +279,41 @@ export async function writeChannels(t: Transport, image: Uint8Array, onProgress?
       done += WRITE_BLOCK;
       onProgress?.(done, total);
     }
+  }
+}
+
+/**
+ * Odswieza sesje programowania: rozlacza sie i wita na nowo.
+ * Samo powitanie na tym samym polaczeniu nie wystarcza - radio wraca do rozmowy
+ * dopiero po ponownym otwarciu portu.
+ */
+async function refreshSession(t: Transport, family?: RadioFamily): Promise<void> {
+  await t.flush();
+  if (t.reconnect) await t.reconnect();
+  await identify(t, family);
+}
+
+/** Zapisuje do radia wylacznie obszary kanalow i nazw z podanego obrazu. */
+export async function writeChannels(
+  t: Transport,
+  image: Uint8Array,
+  onProgress?: ProgressFn,
+  family?: RadioFamily,
+): Promise<void> {
+  if (image.length < MAIN_MEMORY_SIZE) {
+    throw new RadioError('errBadImage', { got: image.length, want: MAIN_MEMORY_SIZE });
+  }
+  try {
+    await writeAllRanges(t, image, onProgress);
+  } catch (err) {
+    if (!(err instanceof RadioError)) throw err;
+    // Tryb programowania wygasa po chwili bezczynnosci, a miedzy odczytem a zapisem
+    // uzytkownik wybiera kanaly i edytuje arkusz - radio zdazy z niego wyjsc i odrzuca
+    // pierwszy blok (objaw: "odrzucil zapis pod adres 0x0"). Witamy sie na nowo i
+    // piszemy caly zakres jeszcze raz: piszemy zawsze te same zakresy, wiec powtorka
+    // niczego nie psuje, a polowicznie zapisane radio i tak trzeba dokonczyc.
+    await refreshSession(t, family);
+    await writeAllRanges(t, image, onProgress);
   }
 }
 

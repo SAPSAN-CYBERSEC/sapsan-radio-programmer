@@ -396,7 +396,7 @@ async function writeToRadio(): Promise<void> {
     writeChannelsIntoImage(image, channels);
 
     writing = true;
-    await writeChannels(transport, image, setProgress);
+    await writeChannels(transport, image, setProgress, family);
 
     const d = tr();
     const parts = [d.doneText(channels.length)];
@@ -459,7 +459,7 @@ async function restoreFromFile(file: File): Promise<void> {
   status.hidden = true;
   try {
     writing = true;
-    await writeChannels(transport, data, setProgress);
+    await writeChannels(transport, data, setProgress, family);
     status.textContent = `${d.restoreDone} ${await verifyWritten(data)}`;
     status.hidden = false;
     // Po przywroceniu obraz w pamieci programu ma odpowiadac stanowi radia.
