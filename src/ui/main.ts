@@ -19,6 +19,7 @@ import {
   type RadioFamily,
 } from '../radio/uv5r-protocol.ts';
 import { WebSerialTransport, isWebSerialSupported } from '../radio/web-serial.ts';
+import { runDiagnostics } from './diagnostics.ts';
 import { localServiceSets, nationalServiceSets, placeGroups } from '../data/services.ts';
 import { t, DEFAULT_LANG, LANGS, formatFreq, type Lang } from '../i18n/index.ts';
 import { ChannelSheet } from './sheet.ts';
@@ -506,6 +507,28 @@ function init(): void {
     const file = fileInput.files?.[0];
     if (file) void restoreFromFile(file);
   });
+
+  // Narzedzie serwisowe pod ?diag - nie zaslania kreatora, gdy nikt go nie wolal.
+  if (new URLSearchParams(location.search).has('diag')) {
+    const panel = $('step-diag');
+    const out = $('diag-out');
+    panel.hidden = false;
+    $('btn-diag').addEventListener('click', async () => {
+      const btn = $<HTMLButtonElement>('btn-diag');
+      btn.disabled = true;
+      out.hidden = false;
+      out.textContent = '';
+      try {
+        await runDiagnostics(family, (line) => {
+          out.textContent += `${line}\n`;
+        });
+      } catch (e) {
+        out.textContent += `unexpected: ${(e as Error).message}\n`;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
 
   // Zamkniecie karty w polowie zapisu zostawia radio z polowa kanalow.
   window.addEventListener('beforeunload', (e) => {

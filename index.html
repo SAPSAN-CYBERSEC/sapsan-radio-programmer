@@ -105,6 +105,17 @@
       </section>
 
       <p class="error" id="error" hidden></p>
+
+      <!-- Narzedzie serwisowe, widoczne tylko z parametrem ?diag w adresie. -->
+      <section class="step" id="step-diag" hidden>
+        <h2>Connection diagnostics</h2>
+        <p class="lead">
+          Service tool. Tries the greeting with every combination of the control lines and
+          shows the raw bytes that came back.
+        </p>
+        <button class="big" id="btn-diag">Run diagnostics</button>
+        <pre id="diag-out" hidden></pre>
+      </section>
     </main>
 
     <footer class="footer">
