@@ -47,10 +47,44 @@ let sheet: ChannelSheet;
 
 const tr = () => t(lang);
 
+/**
+ * Zamienia kod bledu na komunikat w biezacym jezyku strony. Warstwa radiowa
+ * rzuca same kody - tlumaczenie w chwili wyswietlenia sprawia, ze zmiana
+ * jezyka nie zostawia bledow w poprzednim.
+ */
+function radioErrorText(err: RadioError): string {
+  const d = tr();
+  switch (err.code) {
+    case 'browserWarning':
+      return d.browserWarning;
+    case 'errNoDevice':
+      return d.errNoDevice;
+    case 'errPortClosed':
+      return d.errPortClosed;
+    case 'errNoResponse':
+      return d.errNoResponse;
+    case 'errNoConfirm':
+      return d.errNoConfirm;
+    case 'errIdentSilent':
+      return d.errIdentSilent;
+    case 'errIdentFailed':
+      return d.errIdentFailed;
+    case 'errReadRefused':
+      return d.errReadRefused(String(err.params.addr));
+    case 'errReadGarbled':
+      return d.errReadGarbled(String(err.params.addr));
+    case 'errWriteRejected':
+      return d.errWriteRejected(String(err.params.addr));
+    case 'errBadImage':
+      return d.errBadImage(Number(err.params.got), Number(err.params.want));
+    case 'restoreBadFile':
+      return d.restoreBadFile;
+  }
+}
+
 function showError(err: unknown): void {
   const box = $('error');
-  box.textContent =
-    err instanceof RadioError ? `${err.message}${err.hint ? `. ${err.hint}` : ''}` : tr().errGeneric;
+  box.textContent = err instanceof RadioError ? radioErrorText(err) : tr().errGeneric;
   box.hidden = false;
 }
 
@@ -376,7 +410,7 @@ async function restoreFromFile(file: File): Promise<void> {
   if (!looksLikeUv5rImage(data)) {
     // Wgranie obrazu z innego modelu zamienia radio w cegle, a uzytkownik
     // siegajacy po kopie zwykle juz ma klopot i drugi blad by go dobil.
-    showError(new RadioError(d.restoreBadFile));
+    showError(new RadioError('restoreBadFile'));
     return;
   }
 

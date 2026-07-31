@@ -106,6 +106,16 @@ interface Dict {
   again: string;
 
   errGeneric: string;
+  errNoDevice: string;
+  errPortClosed: string;
+  errNoResponse: string;
+  errNoConfirm: string;
+  errIdentSilent: string;
+  errIdentFailed: string;
+  errReadRefused: (addr: string) => string;
+  errReadGarbled: (addr: string) => string;
+  errWriteRejected: (addr: string) => string;
+  errBadImage: (got: number, want: number) => string;
   sets: Record<string, SetText>;
   countries: Record<string, string>;
 }
@@ -150,6 +160,23 @@ const en: Dict = {
   again: 'Set up again',
 
   errGeneric: 'Something went wrong. Unplug the cable, restart the radio and start again.',
+  errNoDevice:
+    'No device was selected. Plug the cable into the computer and try again - the device will show up on the list.',
+  errPortClosed: 'The connection to the radio was closed. Reconnect and try again.',
+  errNoResponse:
+    'The radio is not responding. Check that it is switched on and the plug is pushed all the way in.',
+  errNoConfirm:
+    'The radio did not confirm the connection. Unplug the cable from the radio, plug it back in and try again.',
+  errIdentSilent:
+    'The radio did not respond. Check that the selected model matches the connected radio, the radio is on and the plug is pushed all the way in.',
+  errIdentFailed:
+    'Could not connect to the radio. Check that it is switched on, the plug is pushed all the way in and the volume is not at zero.',
+  errReadRefused: (addr) => `The radio refused a read at address 0x${addr}.`,
+  errReadGarbled: (addr) =>
+    `The radio gave an unexpected reply while reading address 0x${addr}. Unplug the cable, restart the radio and start again.`,
+  errWriteRejected: (addr) =>
+    `The radio rejected a write at address 0x${addr}. Do NOT unplug the cable. Try writing again or restore your backup.`,
+  errBadImage: (got, want) => `The image is ${got} bytes, expected ${want}.`,
 
   sets: {
     pmr446: {
@@ -268,6 +295,23 @@ const pl: Dict = {
   again: 'Ustaw jeszcze raz',
 
   errGeneric: 'Coś poszło nie tak. Odłącz kabel, włącz radio ponownie i spróbuj od początku.',
+  errNoDevice:
+    'Nie wybrano żadnego urządzenia. Podłącz kabel do komputera i spróbuj jeszcze raz - urządzenie pojawi się na liście.',
+  errPortClosed: 'Połączenie z radiem zostało zamknięte. Połącz się ponownie i spróbuj jeszcze raz.',
+  errNoResponse:
+    'Radio nie odpowiada. Sprawdź, czy jest włączone i czy wtyk kabla siedzi do końca w gnieździe.',
+  errNoConfirm:
+    'Radio nie potwierdziło połączenia. Wyjmij wtyk z radia, włóż go ponownie i spróbuj jeszcze raz.',
+  errIdentSilent:
+    'Radio nie odpowiedziało. Sprawdź, czy wybrany model zgadza się z podłączonym, czy radio jest włączone i czy wtyk siedzi do końca.',
+  errIdentFailed:
+    'Nie udało się nawiązać połączenia z radiem. Sprawdź, czy radio jest włączone, czy wtyk siedzi do końca i czy głośność nie jest na zero.',
+  errReadRefused: (addr) => `Radio odmówiło odczytu spod adresu 0x${addr}.`,
+  errReadGarbled: (addr) =>
+    `Radio odpowiedziało niezrozumiale na odczyt spod adresu 0x${addr}. Odłącz kabel, włącz radio ponownie i spróbuj od początku.`,
+  errWriteRejected: (addr) =>
+    `Radio odrzuciło zapis pod adres 0x${addr}. NIE odłączaj kabla. Spróbuj zapisać jeszcze raz albo przywróć kopię zapasową.`,
+  errBadImage: (got, want) => `Obraz ma ${got} bajtów, oczekiwano ${want}.`,
 
   sets: {
     pmr446: { label: 'PMR446', desc: 'Europejskie kanały bez pozwolenia, 16 kanałów w paśmie 446 MHz.' },
@@ -383,6 +427,23 @@ const de: Dict = {
   again: 'Nochmal einrichten',
 
   errGeneric: 'Etwas ist schiefgegangen. Kabel abziehen, Gerät neu starten und noch einmal beginnen.',
+  errNoDevice:
+    'Kein Gerät ausgewählt. Stecke das Kabel in den Computer und versuche es noch einmal - das Gerät erscheint dann in der Liste.',
+  errPortClosed: 'Die Verbindung zum Funkgerät wurde getrennt. Verbinde dich neu und versuche es noch einmal.',
+  errNoResponse:
+    'Das Funkgerät antwortet nicht. Prüfe, ob es eingeschaltet ist und der Stecker ganz im Anschluss sitzt.',
+  errNoConfirm:
+    'Das Funkgerät hat die Verbindung nicht bestätigt. Ziehe den Stecker am Funkgerät ab, stecke ihn wieder ein und versuche es noch einmal.',
+  errIdentSilent:
+    'Das Funkgerät hat nicht geantwortet. Prüfe, ob das gewählte Modell zum angeschlossenen Gerät passt, das Funkgerät eingeschaltet ist und der Stecker ganz drin sitzt.',
+  errIdentFailed:
+    'Es konnte keine Verbindung zum Funkgerät aufgebaut werden. Prüfe, ob es eingeschaltet ist, der Stecker ganz drin sitzt und die Lautstärke nicht auf null steht.',
+  errReadRefused: (addr) => `Das Funkgerät hat das Lesen an Adresse 0x${addr} verweigert.`,
+  errReadGarbled: (addr) =>
+    `Das Funkgerät hat beim Lesen an Adresse 0x${addr} unverständlich geantwortet. Kabel abziehen, Gerät neu starten und noch einmal beginnen.`,
+  errWriteRejected: (addr) =>
+    `Das Funkgerät hat das Schreiben an Adresse 0x${addr} abgelehnt. Kabel NICHT abziehen. Versuche erneut zu schreiben oder stelle die Sicherung wieder her.`,
+  errBadImage: (got, want) => `Das Abbild hat ${got} Bytes, erwartet wurden ${want}.`,
 
   sets: {
     pmr446: { label: 'PMR446', desc: 'Europäische anmeldefreie Kanäle, 16 Kanäle um 446 MHz.' },
@@ -498,6 +559,23 @@ const cs: Dict = {
   again: 'Nastavit znovu',
 
   errGeneric: 'Něco se pokazilo. Odpoj kabel, restartuj vysílačku a začni znovu.',
+  errNoDevice:
+    'Nebylo vybráno žádné zařízení. Připoj kabel k počítači a zkus to znovu - zařízení se objeví v seznamu.',
+  errPortClosed: 'Spojení s vysílačkou bylo ukončeno. Připoj se znovu a zkus to ještě jednou.',
+  errNoResponse:
+    'Vysílačka neodpovídá. Zkontroluj, jestli je zapnutá a jestli je konektor zasunutý až na doraz.',
+  errNoConfirm:
+    'Vysílačka nepotvrdila spojení. Vytáhni konektor z vysílačky, zasuň ho zpět a zkus to znovu.',
+  errIdentSilent:
+    'Vysílačka neodpověděla. Zkontroluj, jestli zvolený model odpovídá připojené vysílačce, jestli je zapnutá a konektor sedí až na doraz.',
+  errIdentFailed:
+    'Nepodařilo se navázat spojení s vysílačkou. Zkontroluj, jestli je zapnutá, konektor sedí až na doraz a hlasitost není na nule.',
+  errReadRefused: (addr) => `Vysílačka odmítla čtení na adrese 0x${addr}.`,
+  errReadGarbled: (addr) =>
+    `Vysílačka odpověděla nesrozumitelně při čtení adresy 0x${addr}. Odpoj kabel, restartuj vysílačku a začni znovu.`,
+  errWriteRejected: (addr) =>
+    `Vysílačka odmítla zápis na adresu 0x${addr}. NEODPOJUJ kabel. Zkus zápis znovu, nebo obnov zálohu.`,
+  errBadImage: (got, want) => `Obraz má ${got} bajtů, očekáváno ${want}.`,
 
   sets: {
     pmr446: { label: 'PMR446', desc: 'Evropské kanály bez povolení, 16 kanálů v pásmu 446 MHz.' },

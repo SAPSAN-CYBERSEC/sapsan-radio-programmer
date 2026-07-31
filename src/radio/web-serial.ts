@@ -53,22 +53,19 @@ export class WebSerialTransport implements Transport {
    */
   static async request(): Promise<WebSerialTransport> {
     if (!isWebSerialSupported()) {
-      throw new RadioError(
-        'Ta przegladarka nie potrafi rozmawiac z radiem',
-        'Otworz strone w Chrome, Edge, Operze albo Brave. Firefox i Safari tego nie obsluguja.',
-      );
+      throw new RadioError('browserWarning');
     }
     let port: SerialPort;
     try {
       port = await navigator.serial.requestPort();
     } catch {
-      throw new RadioError(
-        'Nie wybrano zadnego urzadzenia',
-        'Podlacz kabel do komputera i sprobuj jeszcze raz - urzadzenie pojawi sie na liscie.',
-      );
+      throw new RadioError('errNoDevice');
     }
     await port.open({ baudRate: BAUD_RATE, dataBits: 8, stopBits: 1, parity: 'none' });
-    // Web Serial ustawia DTR i RTS domyslnie, ale przejsciowka potrzebuje chwili.
+    // Na macOS otwarcie portu podnosi DTR i RTS samo, ale sterownik CH340 pod
+    // Windows potrafi zostawic je opuszczone - a radio bez OBU aktywnych milczy.
+    // Ustawiamy jawnie, zanim odczekamy na ustalenie stanu linii.
+    await port.setSignals({ dataTerminalReady: true, requestToSend: true });
     await new Promise((r) => setTimeout(r, PORT_SETTLE_MS));
 
     const t = new WebSerialTransport(port);
@@ -78,7 +75,7 @@ export class WebSerialTransport implements Transport {
   }
 
   async write(data: Uint8Array): Promise<void> {
-    if (!this.writer) throw new RadioError('Polaczenie z radiem zostalo zamkniete');
+    if (!this.writer) throw new RadioError('errPortClosed');
     await this.writer.write(data);
   }
 
@@ -86,10 +83,7 @@ export class WebSerialTransport implements Transport {
     const deadline = Date.now() + READ_TIMEOUT_MS;
     while (this.buffer.length < length) {
       if (Date.now() > deadline) {
-        throw new RadioError(
-          'Radio nie odpowiada',
-          'Sprawdz, czy jest wlaczone i czy wtyk kabla siedzi do konca w gniezdzie.',
-        );
+        throw new RadioError('errNoResponse');
       }
       const chunk = await this.readChunk(deadline - Date.now());
       if (chunk === null) continue;
@@ -105,7 +99,7 @@ export class WebSerialTransport implements Transport {
 
   /** Czyta porcje danych albo zwraca null, gdy uplynal czas. */
   private async readChunk(timeoutMs: number): Promise<Uint8Array | null> {
-    if (!this.reader) throw new RadioError('Polaczenie z radiem zostalo zamkniete');
+    if (!this.reader) throw new RadioError('errPortClosed');
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<null>((resolve) => {
       timer = setTimeout(() => resolve(null), Math.max(0, timeoutMs));
@@ -135,6 +129,8 @@ export class WebSerialTransport implements Transport {
     await this.port.close();
     await new Promise((r) => setTimeout(r, RECONNECT_PAUSE_MS));
     await this.port.open({ baudRate: BAUD_RATE, dataBits: 8, stopBits: 1, parity: 'none' });
+    // Jawne DTR i RTS z tego samego powodu co przy pierwszym otwarciu portu.
+    await this.port.setSignals({ dataTerminalReady: true, requestToSend: true });
     await new Promise((r) => setTimeout(r, PORT_SETTLE_MS));
     this.reader = this.port.readable!.getReader();
     this.writer = this.port.writable!.getWriter();

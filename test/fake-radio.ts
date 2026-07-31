@@ -51,7 +51,7 @@ export class FakeRadio implements Transport {
     if (this.outbox.length < length) {
       // Prawdziwy transport zglasza w tym miejscu przekroczenie czasu, wiec atrapa
       // musi zachowac sie tak samo - inaczej test sprawdzalby inna sciezke bledu.
-      throw new RadioError('Radio nie odpowiada', 'Sprawdz kabel i zasilanie radia.');
+      throw new RadioError('errNoResponse');
     }
     return new Uint8Array(this.outbox.splice(0, length));
   }

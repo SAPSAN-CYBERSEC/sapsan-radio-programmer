@@ -82,14 +82,35 @@ export interface Transport {
   reconnect?(): Promise<void>;
 }
 
-export class RadioError extends Error {
-  /** Podpowiedz dla uzytkownika: co zrobic, zeby bylo dobrze. */
-  readonly hint: string | undefined;
+/**
+ * Kody bledow tlumaczone dopiero w UI - ta warstwa nie zna jezyka strony.
+ * Kazdy kod ma swoj wpis w slowniku i18n; nowy kod bez wpisu zatrzyma kompilacje
+ * na wyczerpujacym switchu w `showError`.
+ */
+export type RadioErrorCode =
+  | 'browserWarning'
+  | 'errNoDevice'
+  | 'errPortClosed'
+  | 'errNoResponse'
+  | 'errNoConfirm'
+  | 'errIdentSilent'
+  | 'errIdentFailed'
+  | 'errReadRefused'
+  | 'errReadGarbled'
+  | 'errWriteRejected'
+  | 'errBadImage'
+  | 'restoreBadFile';
 
-  constructor(message: string, hint?: string) {
-    super(message);
+export class RadioError extends Error {
+  readonly code: RadioErrorCode;
+  /** Wartosci wstawiane do przetlumaczonego komunikatu, np. adres bloku. */
+  readonly params: Record<string, string | number>;
+
+  constructor(code: RadioErrorCode, params: Record<string, string | number> = {}) {
+    super(code);
     this.name = 'RadioError';
-    this.hint = hint;
+    this.code = code;
+    this.params = params;
   }
 }
 
@@ -120,10 +141,7 @@ async function tryIdent(t: Transport, magic: Uint8Array): Promise<Uint8Array | n
   await t.write(new Uint8Array([ACK]));
   const confirm = await t.read(1);
   if (confirm[0] !== ACK) {
-    throw new RadioError(
-      'Radio nie potwierdzilo polaczenia',
-      'Sprobuj wyjac i wlozyc wtyk kabla do radia, a potem sprobowac jeszcze raz.',
-    );
+    throw new RadioError('errNoConfirm');
   }
   return ident;
 }
@@ -148,10 +166,7 @@ export async function identify(t: Transport, only?: RadioFamily): Promise<Identi
   if (only) {
     const ident = await tryIdent(t, MAGICS[only]);
     if (ident) return { family: only, ident };
-    throw new RadioError(
-      'Radio nie odpowiedzialo',
-      'Sprawdz, czy wybrany model zgadza sie z tym podlaczonym, czy radio jest wlaczone i czy wtyk siedzi do konca.',
-    );
+    throw new RadioError('errIdentSilent');
   }
 
   for (const family of IDENT_ORDER) {
@@ -166,10 +181,7 @@ export async function identify(t: Transport, only?: RadioFamily): Promise<Identi
       await sleep(RETRY_DELAY_MS);
     }
   }
-  throw new RadioError(
-    'Nie udalo sie nawiazac polaczenia z radiem',
-    'Sprawdz, czy radio jest wlaczone, czy wtyk siedzi do konca i czy glosnosc nie jest na zero.',
-  );
+  throw new RadioError('errIdentFailed');
 }
 
 /** Czyta jeden blok pamieci spod podanego adresu. */
@@ -185,17 +197,14 @@ async function readBlock(t: Transport, addr: number, size: number, first: boolea
   if (!first) {
     const ack = await t.read(1);
     if (ack[0] !== ACK) {
-      throw new RadioError(`Radio odmowilo odczytu spod adresu 0x${addr.toString(16)}`);
+      throw new RadioError('errReadRefused', { addr: addr.toString(16) });
     }
   }
 
   const header = await t.read(4);
   const respAddr = (header[1]! << 8) | header[2]!;
   if (header[0] !== CMD_WRITE || respAddr !== addr || header[3] !== size) {
-    throw new RadioError(
-      `Radio odpowiedzialo niezrozumiale na odczyt spod adresu 0x${addr.toString(16)}`,
-      'Odlacz kabel, wlacz radio ponownie i sprobuj od poczatku.',
-    );
+    throw new RadioError('errReadGarbled', { addr: addr.toString(16) });
   }
   return t.read(size);
 }
@@ -213,10 +222,7 @@ async function writeBlock(t: Transport, addr: number, data: Uint8Array): Promise
 
   const ack = await t.read(1);
   if (ack[0] !== ACK) {
-    throw new RadioError(
-      `Radio odrzucilo zapis pod adres 0x${addr.toString(16)}`,
-      'NIE odlaczaj kabla. Sprobuj zapisac jeszcze raz albo przywroc kopie zapasowa.',
-    );
+    throw new RadioError('errWriteRejected', { addr: addr.toString(16) });
   }
 }
 
@@ -252,7 +258,7 @@ const WRITE_RANGES: Array<[number, number]> = [
 /** Zapisuje do radia wylacznie obszary kanalow i nazw z podanego obrazu. */
 export async function writeChannels(t: Transport, image: Uint8Array, onProgress?: ProgressFn): Promise<void> {
   if (image.length < MAIN_MEMORY_SIZE) {
-    throw new RadioError(`Obraz ma ${image.length} bajtow, oczekiwano ${MAIN_MEMORY_SIZE}`);
+    throw new RadioError('errBadImage', { got: image.length, want: MAIN_MEMORY_SIZE });
   }
   const total = WRITE_RANGES.reduce((sum, [from, to]) => sum + (to - from), 0);
   let done = 0;

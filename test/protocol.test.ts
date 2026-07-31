@@ -21,6 +21,7 @@ import {
 import { MAIN_MEMORY_SIZE, writeChannelsIntoImage, CHANNELS_ADDR } from '../src/radio/uv5r-memory.ts';
 import { buildChannels } from '../src/data/build-channels.ts';
 import { PMR446 } from '../src/data/bands.ts';
+import { LANGS, t } from '../src/i18n/index.ts';
 import { FakeRadio } from './fake-radio.ts';
 
 test('rozpoznanie radia po sekwencji powitalnej', async () => {
@@ -35,8 +36,12 @@ test('radio, ktore nie odpowiada na zadna sekwencje, konczy sie czytelnym bledem
   const radio = new FakeRadio({ magic: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00] });
   await assert.rejects(() => identify(radio), (err: unknown) => {
     assert.ok(err instanceof RadioError);
-    // Uzytkownik ma dostac wskazowke, nie kod bledu.
-    assert.ok(err.hint && err.hint.length > 0);
+    // Uzytkownik ma dostac wskazowke w swoim jezyku, nie kod bledu - slownik
+    // kazdego jezyka musi umiec przetlumaczyc ten kod na niepusty komunikat.
+    assert.equal(err.code, 'errIdentFailed');
+    for (const { code } of LANGS) {
+      assert.ok(t(code).errIdentFailed.length > 0);
+    }
     return true;
   });
 });
