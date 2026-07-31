@@ -89,6 +89,22 @@ function showError(err: unknown): void {
   box.hidden = false;
 }
 
+/**
+ * Sprzata po utraconej sesji: mowi, co sie stalo, i cofa kreator na ekran laczenia.
+ *
+ * Bez tego zostaje stan zombie - odczytane dane sa, portu nie ma, a kreator dalej
+ * pokazuje krok zapisu. Klikniecie "zapisz" nie ma wtedy jak zadzialac.
+ */
+function dropConnection(): void {
+  transport = null;
+  radioImage = null;
+  backupDone = false;
+  $<HTMLButtonElement>('btn-write').disabled = true;
+  $('backup-status').hidden = true;
+  showError(new RadioError('errPortClosed'));
+  show('step-connect');
+}
+
 function show(stepId: string): void {
   for (const id of ['step-connect', 'step-choose', 'step-sheet', 'step-write', 'step-done']) {
     $(id).hidden = id !== stepId;
@@ -305,14 +321,27 @@ async function connect(): Promise<void> {
   btn.disabled = true;
   btn.textContent = tr().connecting;
   try {
+    // Laczenie przy zywej sesji: zamykamy stara, zanim otworzymy nowa. Bez tego
+    // drugie podejscie wywala sie na zajetym porcie i zostawia kreator bez polaczenia.
+    if (transport) {
+      await transport.close().catch(() => {});
+      transport = null;
+    }
     transport = await WebSerialTransport.request();
     await identify(transport, family);
     radioImage = await readMainMemory(transport, setProgress);
     show('step-choose');
   } catch (err) {
-    showError(err);
     await transport?.close().catch(() => {});
+    // Nieudane laczenie uniewaznia takze dane z poprzedniej sesji - inaczej kreator
+    // zostaje z obrazem radia, do ktorego nie ma juz jak nic zapisac.
     transport = null;
+    radioImage = null;
+    backupDone = false;
+    $<HTMLButtonElement>('btn-write').disabled = true;
+    $('backup-status').hidden = true;
+    showError(err);
+    show('step-connect');
   } finally {
     btn.disabled = false;
     btn.textContent = tr().connect;
@@ -344,7 +373,14 @@ function downloadBackup(): void {
 }
 
 async function writeToRadio(): Promise<void> {
-  if (!transport || !radioImage || !backupDone) return;
+  // Bez polaczenia nie ma o czym mowic, ale milczace wyjscie jest gorsze niz blad:
+  // uzytkownik klika i nie dzieje sie nic. Sesja potrafi paść po ponownym kliknieciu
+  // "Polacz radio" - wtedy dane odczytane wczesniej zostaja, a port juz nie.
+  if (!transport || !radioImage) {
+    dropConnection();
+    return;
+  }
+  if (!backupDone) return;
   $('error').hidden = true;
   const btn = $<HTMLButtonElement>('btn-write');
   btn.disabled = true;
@@ -401,7 +437,10 @@ async function verifyWritten(image: Uint8Array): Promise<string> {
 
 /** Wgrywa do radia obraz z pliku kopii zapasowej. */
 async function restoreFromFile(file: File): Promise<void> {
-  if (!transport) return;
+  if (!transport) {
+    dropConnection();
+    return;
+  }
   $('error').hidden = true;
   const d = tr();
   const btn = $<HTMLButtonElement>('btn-restore');
