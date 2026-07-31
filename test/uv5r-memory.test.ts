@@ -14,6 +14,7 @@ import {
   decodeChannel,
   encodeName,
   decodeName,
+  normalizeName,
   writeChannelsIntoImage,
   MAIN_MEMORY_SIZE,
   CHANNELS_ADDR,
@@ -81,6 +82,37 @@ test('szerokosc kanalu i skanowanie trafiaja we wlasciwe bity', () => {
   const narrow = encodeChannel({ ...base, bandwidth: 'narrow', scan: true });
   assert.equal((narrow[15]! >> 6) & 1, 0);
   assert.equal((narrow[15]! >> 2) & 1, 1);
+});
+
+test('moc koduje sie wg CHIRP: zero to moc pelna, jeden obnizona', () => {
+  // CHIRP trzyma poziomy w kolejnosci [High, Med, Low] - zero zawsze znaczy
+  // pelna moc. Poprzednie mapowanie mialo Mid i Low zamienione miejscami
+  // i na radiach 8 W uzytkownik dostawal 4 W tam, gdzie wybral 1 W.
+  assert.equal(encodeChannel({ ...base, power: 'high' })[14]! & 0x03, 0);
+  assert.equal(encodeChannel({ ...base, power: 'low' })[14]! & 0x03, 1);
+
+  const withPower = (bits: number): Uint8Array => {
+    const buf = encodeChannel(base);
+    buf[14] = bits;
+    return buf;
+  };
+  assert.equal(decodeChannel(withPower(0))?.power, 'high');
+  assert.equal(decodeChannel(withPower(1))?.power, 'low');
+  // Obraz z CHIRP-a z radia 8 W moze niesc 2 (Low) - dla nas to tez moc obnizona.
+  assert.equal(decodeChannel(withPower(2))?.power, 'low');
+  assert.equal(decodeChannel(withPower(3))?.power, 'low');
+});
+
+test('nazwa z polskimi znakami trafia do radia jako transliteracja, nie krzaki', () => {
+  // Znaki spoza zestawu radia mialyby kody powyzej 255 - po obcieciu do bajtu
+  // wyswietlacz pokazalby przypadkowe symbole.
+  assert.equal(normalizeName('Żółw 1'), 'ZOLW 1');
+  assert.equal(decodeName(encodeName('Żółw 1')), 'ZOLW 1');
+  assert.equal(normalizeName('straż'), 'STRAZ');
+  // Znaki bez odpowiednika sa usuwane, a nie zamieniane na cokolwiek.
+  assert.equal(normalizeName('a★b'), 'AB');
+  // Symbole z zestawu radia przechodza bez zmian.
+  assert.equal(normalizeName('k-9/2'), 'K-9/2');
 });
 
 test('nazwa dluzsza niz 7 znakow jest przycinana, a nie odrzucana', () => {

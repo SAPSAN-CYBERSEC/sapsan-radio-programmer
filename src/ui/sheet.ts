@@ -7,8 +7,11 @@
  */
 
 import type { Channel, Bandwidth, Power } from '../radio/uv5r-memory.ts';
-import { CHANNEL_COUNT, NAME_LENGTH, CTCSS_TONES } from '../radio/uv5r-memory.ts';
+import { CHANNEL_COUNT, NAME_LENGTH, CTCSS_TONES, normalizeName } from '../radio/uv5r-memory.ts';
 import { formatFreq, t, type Lang } from '../i18n/index.ts';
+
+/** Nazwa kanalu laduje w atrybucie value - cudzyslow z zestawu znakow radia by go urwal. */
+const escapeAttr = (s: string): string => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 /** Pasma, ktore obsluguje rodzina UV-5R. Poza nimi radio nie odbiera ani nie nadaje. */
 const BANDS: Array<[number, number]> = [
@@ -111,22 +114,25 @@ export class ChannelSheet {
     const tr = document.createElement('tr');
     const rxBad = !isInBand(ch.rxFreq);
 
+    // Numer pozycji liczony od zera - tak samo pokazuje go wyswietlacz radia i CHIRP.
+    // Kanal odczytany z radia moze miec ton tylko przy odbiorze - pokazujemy go,
+    // zamiast udawac, ze tonu nie ma.
+    const shownTone = ch.txTone ?? ch.rxTone;
     const toneOptions = ['<option value="">-</option>']
-      .concat(CTCSS_TONES.map((hz) => `<option value="${hz}"${ch.txTone === hz ? ' selected' : ''}>${hz.toFixed(1)}</option>`))
+      .concat(CTCSS_TONES.map((hz) => `<option value="${hz}"${shownTone === hz ? ' selected' : ''}>${hz.toFixed(1)}</option>`))
       .join('');
 
     tr.innerHTML = `
-      <td class="col-num">${index + 1}</td>
-      <td><input class="f-name" type="text" maxlength="${NAME_LENGTH}" value="${ch.name}" /></td>
+      <td class="col-num">${index}</td>
+      <td><input class="f-name" type="text" maxlength="${NAME_LENGTH}" value="${escapeAttr(ch.name)}" /></td>
       <td><input class="f-rx" type="text" inputmode="decimal" value="${(ch.rxFreq / 1e6).toFixed(5).replace(/0+$/, '').replace(/\.$/, '.0')}" /></td>
       <td><input class="f-tx" type="text" inputmode="decimal" placeholder="${d.sameAsRx}" value="${
-        ch.txFreq === null || ch.txFreq === ch.rxFreq ? '' : (ch.txFreq / 1e6).toFixed(5).replace(/0+$/, '')
+        ch.txFreq === null || ch.txFreq === ch.rxFreq ? '' : (ch.txFreq / 1e6).toFixed(5).replace(/0+$/, '').replace(/\.$/, '')
       }" /></td>
       <td><select class="f-tone">${toneOptions}</select></td>
       <td class="col-flag"><input class="f-wide" type="checkbox" ${ch.bandwidth === 'wide' ? 'checked' : ''} /></td>
       <td><select class="f-power">
         <option value="low"${ch.power === 'low' ? ' selected' : ''}>Low</option>
-        <option value="medium"${ch.power === 'medium' ? ' selected' : ''}>Mid</option>
         <option value="high"${ch.power === 'high' ? ' selected' : ''}>High</option>
       </select></td>
       <td><button class="row-del" type="button" title="${d.removeRow}">×</button></td>`;
@@ -138,9 +144,10 @@ export class ChannelSheet {
 
     const nameInput = tr.querySelector<HTMLInputElement>('.f-name')!;
     nameInput.addEventListener('input', () => {
-      // Radio pokazuje 7 znakow wielkimi literami - lepiej pokazac to od razu,
-      // niz pozwolic wpisac cos, co po zapisie bedzie wygladac inaczej.
-      ch.name = nameInput.value.toUpperCase().slice(0, NAME_LENGTH);
+      // Radio pokazuje 7 znakow wielkimi literami z ograniczonego zestawu -
+      // normalizujemy od razu, zeby uzytkownik widzial dokladnie to, co zapisze
+      // (ZOLW zamiast krzakow, ktore radio zrobiloby z ŻÓŁW).
+      ch.name = normalizeName(nameInput.value);
       nameInput.value = ch.name;
       this.emit();
     });

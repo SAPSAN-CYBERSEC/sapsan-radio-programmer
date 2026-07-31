@@ -33,8 +33,15 @@ export const CTCSS_TONES = [
 
 /** Szerokosc kanalu. UV-5R zna tylko dwie. */
 export type Bandwidth = 'wide' | 'narrow';
-/** Moc nadawania. Radia 8 W maja trzy poziomy, 5 W dwa - kodowanie jest wspolne. */
-export type Power = 'high' | 'medium' | 'low';
+/**
+ * Moc nadawania. Oferujemy dwa poziomy, bo tylko one znacza to samo na calej
+ * rodzinie: 0 = pelna moc, 1 = obnizona. Warianty 8 W (UV-82HP, BF-F8HP) maja
+ * w tym polu trzy wartosci (0 = 8 W, 1 = 4 W, 2 = 1 W wg CHIRP), ale dziela
+ * pozycje na liscie modeli ze swoimi wersjami 5 W - nie wiemy, ktora wersje
+ * uzytkownik podlaczyl, wiec nie zapisujemy wartosci 2, ktorej starsze wersje
+ * nie znaja. Trzeci poziom wroci, gdy rozdzielimy warianty na liscie modeli.
+ */
+export type Power = 'high' | 'low';
 
 export interface Channel {
   /** Czestotliwosc odbioru w Hz. */
@@ -107,8 +114,14 @@ function decodeTone(raw: number): number | undefined {
   return raw / 10;
 }
 
-const POWER_BITS: Record<Power, number> = { high: 0, medium: 2, low: 1 };
-const POWER_FROM_BITS: Record<number, Power> = { 0: 'high', 1: 'low', 2: 'medium', 3: 'low' };
+/**
+ * Kodowanie mocy wg CHIRP: 0 = najwyzsza, wyzsze wartosci = nizsza moc.
+ * Poprzednie mapowanie (medium: 2, low: 1) mialo zamieniona kolejnosc wzgledem
+ * CHIRP-owego [High, Med, Low] i na radiach 8 W odwracalo Mid z Low.
+ */
+const POWER_BITS: Record<Power, number> = { high: 0, low: 1 };
+/** Wartosci 2 i 3 zapisuja programy trzeciopoziomowe - dla nas to tez obnizona moc. */
+const POWER_FROM_BITS: Record<number, Power> = { 0: 'high', 1: 'low', 2: 'low', 3: 'low' };
 
 /**
  * Koduje kanal do 16 bajtow w formacie UV-5R.
@@ -172,10 +185,35 @@ export function decodeChannel(buf: Uint8Array): Channel | null {
   };
 }
 
+/**
+ * Znaki, ktore wyswietlacz radia zna (UV5R_CHARSET z CHIRP-a). Bajt spoza tej
+ * listy pokazuje sie jako smieci - a polskie znaki mialyby kody powyzej 255
+ * i po obcieciu do bajtu trafialyby w przypadkowe symbole.
+ */
+const NAME_CHARSET = new Set([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !@#$%^&*()+-=[]:";\'<>?,./']);
+
+/** Polskie znaki maja oczywiste odpowiedniki ASCII - lepsze "ZOLW" niz krzaki. */
+const TRANSLITERATION: Record<string, string> = {
+  Ą: 'A', Ć: 'C', Ę: 'E', Ł: 'L', Ń: 'N', Ó: 'O', Ś: 'S', Ź: 'Z', Ż: 'Z',
+};
+
+/**
+ * Sprowadza nazwe do postaci, ktora radio faktycznie wyswietli: wielkie litery,
+ * polskie znaki przetransliterowane, znaki spoza zestawu radia usuniete, 7 znakow.
+ * Arkusz uzywa tej samej funkcji, zeby uzytkownik widzial dokladnie to, co zapisze.
+ */
+export function normalizeName(raw: string): string {
+  return [...raw.toUpperCase()]
+    .map((c) => TRANSLITERATION[c] ?? c)
+    .filter((c) => NAME_CHARSET.has(c))
+    .join('')
+    .slice(0, NAME_LENGTH);
+}
+
 /** Koduje nazwe kanalu: 7 znakow ASCII wielkimi literami, reszta wypelniacz. */
 export function encodeName(name: string): Uint8Array {
   const buf = new Uint8Array(CHANNEL_SIZE).fill(EMPTY);
-  const clean = name.toUpperCase().slice(0, NAME_LENGTH);
+  const clean = normalizeName(name);
   for (let i = 0; i < clean.length; i++) {
     buf[i] = clean.charCodeAt(i);
   }
@@ -198,7 +236,8 @@ export function emptyChannelBytes(): Uint8Array {
 }
 
 /**
- * Wstawia liste kanalow do pelnego obrazu pamieci, zaczynajac od pozycji 1.
+ * Wstawia liste kanalow do pelnego obrazu pamieci, od pierwszej pozycji.
+ * Radio i CHIRP numeruja pozycje od 0 do 127 - arkusz pokazuje te same numery.
  * Obraz jest modyfikowany w miejscu - to swiadome, bo pracujemy na kopii
  * odczytanej z radia i chcemy zachowac wszystkie ustawienia, ktorych nie ruszamy.
  */
