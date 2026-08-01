@@ -33,6 +33,10 @@ interface Dict {
   footerPrivacy: string;
   /** `shop` to gotowy odnosnik - tekst dookola zmienia sie z jezykiem, adres nie. */
   footerMadeBy: (shop: string) => string;
+  /** Opis strony dla wyszukiwarek i karty przegladarki - podmieniany przy zmianie jezyka. */
+  metaDescription: string;
+  /** `url` to zlokalizowany adres kolekcji Baofengow w sklepie; zdanie z odnosnikiem w srodku. */
+  buyRadio: (url: string) => string;
   showFreqs: (n: number) => string;
   model: string;
   /** Dopisek przy starszym UV-5R, bo sama nazwa nie odroznia go od nowszego. */
@@ -212,6 +216,9 @@ const en: Dict = {
   groupOther: 'Other',
   footerPrivacy: 'Everything runs in your browser. Nothing is sent anywhere.',
   footerMadeBy: (shop) => `A free, open source tool by ${shop} - a shop with Baofeng radios and programming cables.`,
+  metaDescription: 'Set up channels in your Baofeng handheld straight from the browser. Nothing to install.',
+  buyRadio: (url) =>
+    `No radio yet? Baofeng handhelds and programming cables are available in <a href="${url}" target="_blank" rel="noopener">our shop</a>.`,
   showFreqs: (n) => `Show all ${n} frequencies`,
   model: 'Which radio is it?',
   modelOlder: 'older, before BFB291',
@@ -344,6 +351,9 @@ const pl: Dict = {
   groupOther: 'Pozostałe',
   footerPrivacy: 'Wszystko dzieje się w Twojej przeglądarce. Nic nie jest nigdzie wysyłane.',
   footerMadeBy: (shop) => `Darmowe narzędzie o otwartym kodzie od ${shop} - sklepu z radiotelefonami Baofeng i kablami programującymi.`,
+  metaDescription: 'Zaprogramuj kanały w radiotelefonie Baofeng prosto z przeglądarki. Bez instalowania czegokolwiek.',
+  buyRadio: (url) =>
+    `Nie masz jeszcze radia? Baofengi i kable programujące znajdziesz w <a href="${url}" target="_blank" rel="noopener">naszym sklepie</a>.`,
   showFreqs: (n) => `Pokaż wszystkie ${n} częstotliwości`,
   model: 'Jakie to radio?',
   modelOlder: 'starsze, sprzed BFB291',
@@ -476,6 +486,9 @@ const de: Dict = {
   groupOther: 'Sonstige',
   footerPrivacy: 'Alles läuft in deinem Browser. Nichts wird irgendwohin gesendet.',
   footerMadeBy: (shop) => `Ein kostenloses Open-Source-Werkzeug von ${shop} - einem Shop mit Baofeng-Funkgeräten und Programmierkabeln.`,
+  metaDescription: 'Kanäle im Baofeng-Handfunkgerät direkt aus dem Browser einrichten. Ohne Installation.',
+  buyRadio: (url) =>
+    `Noch kein Funkgerät? Baofeng-Geräte und Programmierkabel gibt es in <a href="${url}" target="_blank" rel="noopener">unserem Shop</a>.`,
   showFreqs: (n) => `Alle ${n} Frequenzen anzeigen`,
   model: 'Welches Gerät ist es?',
   modelOlder: 'älter, vor BFB291',
@@ -608,6 +621,9 @@ const cs: Dict = {
   groupOther: 'Ostatní',
   footerPrivacy: 'Vše běží ve tvém prohlížeči. Nic se nikam neodesílá.',
   footerMadeBy: (shop) => `Bezplatný nástroj s otevřeným kódem od ${shop} - obchodu s vysílačkami Baofeng a programovacími kabely.`,
+  metaDescription: 'Naprogramujte kanály ve vysílačce Baofeng přímo z prohlížeče. Bez instalace.',
+  buyRadio: (url) =>
+    `Ještě nemáte vysílačku? Baofengy a programovací kabely najdete v <a href="${url}" target="_blank" rel="noopener">našem obchodě</a>.`,
   showFreqs: (n) => `Zobrazit všech ${n} frekvencí`,
   model: 'Jaká je to vysílačka?',
   modelOlder: 'starší, před BFB291',

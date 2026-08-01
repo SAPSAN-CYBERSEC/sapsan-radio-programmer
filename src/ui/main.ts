@@ -30,7 +30,22 @@ const $ = <T extends HTMLElement>(id: string): T => {
   return el as T;
 };
 
-let lang: Lang = DEFAULT_LANG;
+/**
+ * Zlokalizowane adresy sklepu. Polski katalog nie ma przedrostka, reszta ma
+ * swoje sciezki jezykowe - link prowadzi wprost, bez przekierowania.
+ */
+const SHOP_LOCALE_PATH: Record<Lang, string> = { en: '/en', pl: '', de: '/de', cs: '/cs' };
+const shopHome = (l: Lang): string => `https://sapsan-sklep.pl${SHOP_LOCALE_PATH[l]}/`;
+const shopBaofengs = (l: Lang): string =>
+  `https://sapsan-sklep.pl${SHOP_LOCALE_PATH[l]}/collections/baofeng`;
+
+/** Jezyk z adresu (?lang=pl) - dzieki temu kazda wersja jezykowa ma wlasny URL. */
+function langFromUrl(): Lang | null {
+  const raw = new URLSearchParams(location.search).get('lang');
+  return LANGS.some((l) => l.code === raw) ? (raw as Lang) : null;
+}
+
+let lang: Lang = langFromUrl() ?? DEFAULT_LANG;
 let country: Country = 'US';
 /** Miejscowosc dla polskich sluzb. Poza Polska nieuzywana. */
 let place: string | null = null;
@@ -135,6 +150,7 @@ function applyTexts(): void {
   const d = tr();
   document.documentElement.lang = lang;
   document.title = d.title;
+  document.querySelector('meta[name="description"]')?.setAttribute('content', d.metaDescription);
   renderModelOptions();
 
   const map: Record<string, string> = {
@@ -176,8 +192,9 @@ function applyTexts(): void {
   // Kto za tym stoi. Odnosnik otwiera sie w nowej karcie, bo uzytkownik bywa
   // w polowie programowania radia i nie ma go po co z tego wyrzucac.
   $('t-footer-by').innerHTML = d.footerMadeBy(
-    '<a href="https://sapsan-sklep.pl/" target="_blank" rel="noopener">SAPSAN CYBERSEC</a>',
+    `<a href="${shopHome(lang)}" target="_blank" rel="noopener">SAPSAN CYBERSEC</a>`,
   );
+  $('t-buy').innerHTML = d.buyRadio(shopBaofengs(lang));
 
   // Pomoc sklada sie z akapitow, w ktorych **pogrubienie** niesie tresc - stad
   // minimalna zamiana zamiast wciagania biblioteki do markdownu.
@@ -492,6 +509,12 @@ function init(): void {
   langSel.value = lang;
   langSel.addEventListener('change', () => {
     lang = langSel.value as Lang;
+    // Jezyk trzyma sie adresu (?lang=...), wiec strone w danym jezyku da sie
+    // komus podeslac; angielski jako domyslny zostaje bez parametru.
+    const url = new URL(location.href);
+    if (lang === DEFAULT_LANG) url.searchParams.delete('lang');
+    else url.searchParams.set('lang', lang);
+    history.replaceState(null, '', url);
     sheet.setLang(lang);
     applyTexts();
     updateSheetCounter();

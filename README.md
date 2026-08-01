@@ -5,9 +5,9 @@ from 2011.
 
 **Use it now: [radio.sapsan-sklep.pl](https://radio.sapsan-sklep.pl)** - nothing to install.
 
-> **Status: early. Works on real hardware, tested on a Baofeng UV-82 on macOS and Windows 7
-> (Chrome 109). The write path was recently reworked to follow CHIRP's clone protocol exactly and
-> is awaiting one more full pass on hardware.**
+> **Status: works on real hardware. Full cycle - read, edit, write, verify - tested on a Baofeng
+> UV-82 on macOS and Windows 11. Windows 7 (Chrome 109) verified through read and backup. The
+> write path follows CHIRP's clone protocol.**
 
 ## Why this exists
 
