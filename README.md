@@ -200,4 +200,4 @@ Licensed **GPL-3.0**, same as CHIRP.
 
 ---
 
-Built by [SAPSAN](https://sapsan-sklep.pl), a Polish shop selling the radios this programs.
+Built by [SAPSAN](https://sapsan-sklep.pl), a Polish shop selling the radios this tool programs.
