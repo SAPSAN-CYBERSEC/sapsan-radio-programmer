@@ -3,7 +3,11 @@
 Set up channels in a Baofeng handheld from your browser. No Python, no CHIRP install, no driver CD
 from 2011.
 
-> **Status: early. Works on real hardware, tested on a Baofeng UV-82. Not yet tested on Windows.**
+**Use it now: [radio.sapsan-sklep.pl](https://radio.sapsan-sklep.pl)** - nothing to install.
+
+> **Status: early. Works on real hardware, tested on a Baofeng UV-82 on macOS and Windows 7
+> (Chrome 109). The write path was recently reworked to follow CHIRP's clone protocol exactly and
+> is awaiting one more full pass on hardware.**
 
 ## Why this exists
 
@@ -119,6 +123,7 @@ This is the part no web page can fix, so here it is plainly.
 | **Linux** | in-kernel (`ch341`) for many years | works out of the box |
 | **macOS** | built in since 10.14 | a manufacturer driver, once installed, claims the device and takes over from the built-in one |
 | **Windows 10/11** | inconsistent | sometimes a stale driver is pulled in, sometimes none at all |
+| **Windows 7** | never installed automatically | the cable sits in Device Manager under "Other devices" as **USB Serial** with a yellow mark (Code 28), and the browser's port picker shows only the motherboard's empty COM1 - which looks exactly like a broken app. Install `CH341SER` from WCH, replug, done |
 | **Prolific PL2303 (counterfeit)** | deliberately blocked by the vendor | not fixable from our side |
 
 WebUSB would let a page bypass the OS driver, but it does not support CH340 or CP2102 - the very
@@ -129,7 +134,7 @@ chips these cables use. So "no drivers needed" would be a half-truth, and we do 
 ```bash
 npm install
 npm run dev      # dev server
-npm test         # 32 tests, no hardware needed
+npm test         # protocol and data tests against a fake radio, no hardware needed
 npm run build    # production build
 ```
 

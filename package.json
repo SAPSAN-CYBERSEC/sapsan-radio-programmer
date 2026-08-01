@@ -2,7 +2,8 @@
   "name": "sapsan-radio-programmer",
   "version": "0.1.0",
   "private": true,
-  "description": "Webowy programator krotkofalowek Baofeng - Web Serial, bez instalacji",
+  "license": "GPL-3.0-only",
+  "description": "Program Baofeng handhelds from your browser - Web Serial, no install, no backend",
   "type": "module",
   "scripts": {
     "dev": "vite",
