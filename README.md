@@ -5,6 +5,8 @@ from 2011.
 
 **Use it now: [radio.sapsan-sklep.pl](https://radio.sapsan-sklep.pl)** - nothing to install.
 
+![Step one in the browser: pick the model and connect the radio](docs/screenshot.png)
+
 > **Status: works on real hardware. Full cycle - read, edit, write, verify - tested on a Baofeng
 > UV-82 on macOS and Windows 11. Windows 7 (Chrome 109) verified through read and backup. The
 > write path follows CHIRP's clone protocol.**
